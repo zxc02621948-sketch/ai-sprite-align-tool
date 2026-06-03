@@ -26,6 +26,7 @@ After using this tool, the frames are aligned to a consistent anchor point, maki
 
 ![Aligned animation](demo/aligned.gif)
 
+![Sprite sheet comparison](demo/sprite-before-after.png)
 
 ## What is a Sprite Sheet?
 
@@ -190,6 +191,7 @@ AI 很容易生成漂亮的動畫圖，但常見問題是：
 
 ![修正後](demo/aligned.gif)
 
+![Spritesheet 對比圖](demo/sprite-before-after.png)
 
 ## 什麼是精靈圖 / Sprite？
 
