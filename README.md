@@ -12,6 +12,21 @@ This tool helps align each frame to a consistent anchor point, making AI-generat
 
 ---
 
+## Demo
+
+### Before Alignment
+
+The original AI-generated sprite sheet has inconsistent frame positions, causing visible jitter during playback.
+
+![Before alignment](demo/before.gif)
+
+### After Alignment
+
+After using this tool, the frames are aligned to a consistent anchor point, making the animation much more stable.
+
+![After alignment](demo/after.gif)
+
+
 ## What is a Sprite Sheet?
 
 A **sprite** is a 2D image used in games, such as a character, enemy, item, effect, or UI icon.
@@ -160,6 +175,21 @@ AI 很容易生成漂亮的動畫圖，但常見問題是：
 這個工具會自動分析每格主體位置，並依照指定的錨點重新對齊，讓 AI 生成的動畫素材更接近遊戲可用狀態。
 
 ---
+
+## 展示效果
+
+### 修正前
+
+原本 AI 生成的 spritesheet 每格位置不一致，播放時會明顯抖動。
+
+![修正前](demo/before.gif)
+
+### 修正後
+
+使用工具對齊後，每格主體位置更穩定，動畫播放也更順。
+
+![修正後](demo/after.gif)
+
 
 ## 什麼是精靈圖 / Sprite？
 
