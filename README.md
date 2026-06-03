@@ -143,7 +143,7 @@ run.bat
 
 ## 中文說明：AI 動畫圖格對齊工具
 
-## Live Demo
+## 線上工具
 
 https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
 
