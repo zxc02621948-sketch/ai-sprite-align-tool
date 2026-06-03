@@ -18,13 +18,13 @@ This tool helps align each frame to a consistent anchor point, making AI-generat
 
 The original AI-generated sprite sheet has inconsistent frame positions, causing visible jitter during playback.
 
-![Before alignment](demo/before.gif)
+![Misaligned animation](demo/misaligned.gif)
 
 ### After Alignment
 
 After using this tool, the frames are aligned to a consistent anchor point, making the animation much more stable.
 
-![After alignment](demo/after.gif)
+![Aligned animation](demo/aligned.gif)
 
 
 ## What is a Sprite Sheet?
@@ -182,13 +182,13 @@ AI 很容易生成漂亮的動畫圖，但常見問題是：
 
 原本 AI 生成的 spritesheet 每格位置不一致，播放時會明顯抖動。
 
-![修正前](demo/before.gif)
+![修正前](demo/misaligned.gif)
 
 ### 修正後
 
 使用工具對齊後，每格主體位置更穩定，動畫播放也更順。
 
-![修正後](demo/after.gif)
+![修正後](demo/aligned.gif)
 
 
 ## 什麼是精靈圖 / Sprite？
