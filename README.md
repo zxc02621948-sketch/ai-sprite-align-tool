@@ -1,5 +1,7 @@
 # AI Sprite Align Tool
 
+![AI Sprite Align Tool](demo/social-preview.png)
+
 ## Live Demo
 
 https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
