@@ -1,5 +1,9 @@
 # AI Sprite Align Tool
 
+## Live Demo
+
+https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
+
 A browser-based tool for fixing misaligned AI-generated sprite sheets.
 
 AI-generated sprite sheets often look good as still images, but each frame may have a different subject position. When imported into a game, the animation can jitter, shake, or appear unstable.
@@ -138,6 +142,10 @@ run.bat
 ---
 
 ## 中文說明：AI 動畫圖格對齊工具
+
+## Live Demo
+
+https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
 
 這是一個本地瀏覽器工具，用來修正 AI 生成 spritesheet 時，每一格主體位置不一致的問題。
 
