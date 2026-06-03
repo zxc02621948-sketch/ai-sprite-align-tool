@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>動畫格自動對齊工具</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10100f;
+      --panel: #1a1713;
+      --line: #5c4320;
+      --text: #eadcc2;
+      --muted: #b7a58a;
+      --accent: #d7a83e;
+      --good: #78e0bd;
+      --bad: #ff5d6c;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(215,168,62,.16), transparent 32%),
+        linear-gradient(180deg, #17130f, #080807);
+      font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .toolbar,
+    .panel,
+    .status {
+      border: 1px solid rgba(215,168,62,.28);
+      background: rgba(22,18,14,.9);
+      box-shadow: inset 0 0 18px rgba(0,0,0,.28);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+    }
+
+    button,
+    select,
+    input[type="number"] {
+      min-height: 34px;
+      border: 1px solid rgba(215,168,62,.46);
+      background: linear-gradient(180deg, #2b251d, #15120f);
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button {
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(232,194,95,.78);
+      color: #fff2d8;
+    }
+
+    input[type="number"] {
+      width: 64px;
+      padding: 0 6px;
+    }
+
+    select { padding: 0 8px; }
+    label {
+      display: inline-flex;
+      gap: 5px;
+      align-items: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .file-btn input { display: none; }
+
+    .main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 10px;
+    }
+
+    .work {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(260px, 1fr) 190px;
+      gap: 10px;
+    }
+
+    .panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      padding: 10px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--accent);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 180px;
+      display: block;
+      border: 1px solid rgba(255,255,255,.08);
+      background: #111;
+    }
+
+    .player-panel {
+      grid-column: 1 / -1;
+    }
+
+    .side {
+      min-height: 0;
+      padding: 12px;
+      overflow-y: auto;
+    }
+
+    .control {
+      margin-bottom: 14px;
+    }
+
+    .control-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .hint {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .status {
+      min-height: 34px;
+      padding: 8px 10px;
+      color: var(--muted);
+    }
+
+    .drop-active .panel,
+    .drop-active .toolbar {
+      border-color: rgba(255,220,128,.92);
+      box-shadow:
+        0 0 0 1px rgba(255,220,128,.42),
+        inset 0 0 24px rgba(215,168,62,.18);
+    }
+
+    @media (max-width: 980px) {
+      .main { grid-template-columns: 1fr; }
+      .work { grid-template-columns: 1fr; grid-template-rows: repeat(3, minmax(220px, auto)); }
+      .player-panel { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="toolbar">
+      <label class="file-btn">
+        <button type="button">開啟圖檔</button>
+        <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
+      </label>
+      <button id="analyze-btn" type="button">分析格子</button>
+      <button id="align-btn" type="button">自動對齊</button>
+      <button id="play-btn" type="button">播放</button>
+      <button id="export-btn" type="button">匯出 PNG</button>
+      <label>欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
+      <label>列 <input id="rows" type="number" min="1" max="32" value="2"></label>
+      <label>基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
+      <label>對齊
+        <select id="anchor-mode">
+          <option value="center">主體中心</option>
+          <option value="bottom" selected>底部中心</option>
+          <option value="centroid">視覺重心</option>
+        </select>
+      </label>
+      <label>底色
+        <select id="bg-mode">
+          <option value="checker">棋盤格</option>
+          <option value="game">遊戲暗底</option>
+          <option value="black">黑底</option>
+          <option value="white">白底</option>
+        </select>
+      </label>
+    </div>
+
+    <main class="main">
+      <section class="work">
+        <div class="panel">
+          <div class="panel-title"><span>原始 spritesheet</span><span id="source-info"></span></div>
+          <canvas id="source-canvas"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><span>對齊後 spritesheet</span><span id="aligned-info"></span></div>
+          <canvas id="aligned-canvas"></canvas>
+        </div>
+        <div class="panel player-panel">
+          <div class="panel-title"><span>動畫預覽</span><span id="frame-info"></span></div>
+          <canvas id="player-canvas"></canvas>
+        </div>
+      </section>
+
+      <aside class="panel side">
+        <div class="panel-title">設定</div>
+        <div>
+          <div class="control">
+            <div class="control-head"><span>Alpha 偵測門檻</span><b id="alpha-label">12</b></div>
+            <input id="alpha-threshold" type="range" min="1" max="180" value="12">
+          </div>
+          <div class="control">
+            <div class="control-head"><span>保留格邊距</span><b id="padding-label">0</b></div>
+            <input id="frame-padding" type="range" min="0" max="80" value="0">
+          </div>
+          <div class="control">
+            <div class="control-head"><span>取樣外溢邊距</span><b id="bleed-label">24</b></div>
+            <input id="bleed-padding" type="range" min="0" max="120" value="24">
+          </div>
+          <div class="control">
+            <div class="control-head"><span>播放速度 FPS</span><b id="fps-label">8</b></div>
+            <input id="fps" type="range" min="1" max="24" value="8">
+          </div>
+          <label><input id="show-boxes" type="checkbox" checked> 顯示偵測框與錨點</label>
+          <br><br>
+          <label><input id="row-align" type="checkbox" checked> 逐列對齊</label>
+          <br><br>
+          <label><input id="expand-output" type="checkbox" checked> 自動擴大格子避免裁切</label>
+          <br><br>
+          <label><input id="subject-mask" type="checkbox" checked> 只保留每格主體，避免撈到隔壁</label>
+          <div class="hint">
+            <br>
+            使用方式：<br>
+            1. 拖入 spritesheet。<br>
+            2. 設定欄、列，例如 4x2。<br>
+            3. 若特效被格線切到，提高「取樣外溢邊距」。<br>
+            4. 按「分析格子」看每格主體框。<br>
+            5. 按「自動對齊」。<br>
+            6. 播放確認不再亂飄後匯出。<br><br>
+            透明背景素材效果最好。暗底素材也能抓，但準度會比較差。
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <div class="status" id="status">請開啟 spritesheet，或直接把圖片拖進視窗。</div>
+  </div>
+
+  <script>
+    const state = {
+      fileName: 'spritesheet_aligned',
+      source: null,
+      aligned: null,
+      frames: [],
+      shifts: [],
+      playing: false,
+      playIndex: 0,
+      playTimer: 0,
+    };
+
+    const el = {
+      app: document.getElementById('app'),
+      file: document.getElementById('file-input'),
+      sourceCanvas: document.getElementById('source-canvas'),
+      alignedCanvas: document.getElementById('aligned-canvas'),
+      playerCanvas: document.getElementById('player-canvas'),
+      status: document.getElementById('status'),
+      cols: document.getElementById('cols'),
+      rows: document.getElementById('rows'),
+      reference: document.getElementById('reference'),
+      anchorMode: document.getElementById('anchor-mode'),
+      bgMode: document.getElementById('bg-mode'),
+      alpha: document.getElementById('alpha-threshold'),
+      padding: document.getElementById('frame-padding'),
+      bleed: document.getElementById('bleed-padding'),
+      fps: document.getElementById('fps'),
+      showBoxes: document.getElementById('show-boxes'),
+      rowAlign: document.getElementById('row-align'),
+      expandOutput: document.getElementById('expand-output'),
+      subjectMask: document.getElementById('subject-mask'),
+      alphaLabel: document.getElementById('alpha-label'),
+      paddingLabel: document.getElementById('padding-label'),
+      bleedLabel: document.getElementById('bleed-label'),
+      fpsLabel: document.getElementById('fps-label'),
+      sourceInfo: document.getElementById('source-info'),
+      alignedInfo: document.getElementById('aligned-info'),
+      frameInfo: document.getElementById('frame-info'),
+    };
+
+    document.querySelector('.file-btn button').addEventListener('click', () => el.file.click());
+    el.file.addEventListener('change', () => {
+      if (el.file.files[0]) loadFile(el.file.files[0]);
+    });
+    document.getElementById('analyze-btn').addEventListener('click', analyze);
+    document.getElementById('align-btn').addEventListener('click', alignFrames);
+    document.getElementById('play-btn').addEventListener('click', togglePlay);
+    document.getElementById('export-btn').addEventListener('click', exportPng);
+
+    for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.rowAlign, el.expandOutput, el.subjectMask]) {
+      input.addEventListener('change', () => {
+        analyze(true);
+        render();
+      });
+    }
+    for (const [input, label] of [[el.alpha, el.alphaLabel], [el.padding, el.paddingLabel], [el.bleed, el.bleedLabel], [el.fps, el.fpsLabel]]) {
+      input.addEventListener('input', () => {
+        label.textContent = input.value;
+        if (input !== el.fps) analyze(true);
+        render();
+      });
+    }
+
+    for (const type of ['dragenter', 'dragover']) {
+      window.addEventListener(type, event => {
+        event.preventDefault();
+        el.app.classList.add('drop-active');
+      });
+    }
+    for (const type of ['dragleave', 'drop']) {
+      window.addEventListener(type, event => {
+        event.preventDefault();
+        if (type === 'drop') {
+          const file = [...event.dataTransfer.files].find(item => /^image\//.test(item.type));
+          if (file) loadFile(file);
+        }
+        el.app.classList.remove('drop-active');
+      });
+    }
+    window.addEventListener('resize', render);
+
+    function setStatus(text) {
+      el.status.textContent = text;
+    }
+
+    function loadFile(file) {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        state.fileName = file.name.replace(/\.[^.]+$/, '') || 'spritesheet_aligned';
+        state.source = imageToData(img);
+        state.aligned = null;
+        state.shifts = [];
+        setStatus(`已載入 ${file.name}  ${img.naturalWidth}x${img.naturalHeight}`);
+        analyze(true);
+        render();
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        setStatus('圖片載入失敗。');
+      };
+      img.src = url;
+    }
+
+    function imageToData(img) {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+
+    function analyze(silent = false) {
+      if (!state.source) return;
+      const cols = Math.max(1, Number(el.cols.value) || 1);
+      const rows = Math.max(1, Number(el.rows.value) || 1);
+      const total = cols * rows;
+      el.reference.max = String(total);
+      if (Number(el.reference.value) > total) el.reference.value = String(total);
+
+      state.frames = [];
+      const bleed = Number(el.bleed.value);
+      for (let index = 0; index < total; index++) {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const rect = gridRect(state.source.width, state.source.height, cols, rows, col, row);
+        const sampleRect = expandRect(rect, bleed, state.source.width, state.source.height);
+        const shape = detectFrameShape(state.source, rect, sampleRect, Number(el.alpha.value));
+        const bounds = shape.bounds;
+        const anchor = getAnchor(bounds, rect, el.anchorMode.value);
+        state.frames.push({ index, rect, sampleRect, bounds, anchor, mask: shape.mask });
+      }
+      if (!silent) setStatus(`分析完成：${cols}x${rows}，共 ${total} 格。`);
+      render();
+    }
+
+    function gridRect(imageW, imageH, cols, rows, col, row) {
+      const x0 = Math.round(col * imageW / cols);
+      const x1 = Math.round((col + 1) * imageW / cols);
+      const y0 = Math.round(row * imageH / rows);
+      const y1 = Math.round((row + 1) * imageH / rows);
+      return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+
+    function expandRect(rect, amount, imageW, imageH) {
+      const x = Math.max(0, rect.x - amount);
+      const y = Math.max(0, rect.y - amount);
+      const right = Math.min(imageW, rect.x + rect.w + amount);
+      const bottom = Math.min(imageH, rect.y + rect.h + amount);
+      return { x, y, w: right - x, h: bottom - y };
+    }
+
+    function detectFrameShape(image, rect, sampleRect, threshold) {
+      if (!el.subjectMask || !el.subjectMask.checked) {
+        return { bounds: detectBounds(image, rect, sampleRect, threshold), mask: null };
+      }
+
+      const width = sampleRect.w;
+      const height = sampleRect.h;
+      const total = width * height;
+      const strong = new Uint8Array(total);
+      const visited = new Uint8Array(total);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const coreLeft = rect.x + rect.w * 0.16;
+      const coreRight = rect.x + rect.w * 0.84;
+      const coreTop = rect.y + rect.h * 0.04;
+      const coreBottom = rect.y + rect.h * 0.96;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const px = sampleRect.x + x;
+          const py = sampleRect.y + y;
+          const alpha = image.data[(py * image.width + px) * 4 + 3];
+          if (alpha >= threshold) strong[y * width + x] = 1;
+        }
+      }
+
+      const components = [];
+      const queue = new Int32Array(total);
+      for (let start = 0; start < total; start++) {
+        if (!strong[start] || visited[start]) continue;
+        let head = 0;
+        let tail = 0;
+        let area = 0;
+        let insideHits = 0;
+        let coreHits = 0;
+        let sumX = 0;
+        let sumY = 0;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        const pixels = [];
+
+        visited[start] = 1;
+        queue[tail++] = start;
+        while (head < tail) {
+          const current = queue[head++];
+          pixels.push(current);
+          const lx = current % width;
+          const ly = Math.floor(current / width);
+          const px = sampleRect.x + lx;
+          const py = sampleRect.y + ly;
+          area++;
+          sumX += px;
+          sumY += py;
+          minX = Math.min(minX, px);
+          minY = Math.min(minY, py);
+          maxX = Math.max(maxX, px);
+          maxY = Math.max(maxY, py);
+          if (px >= rect.x && px < rect.x + rect.w && py >= rect.y && py < rect.y + rect.h) insideHits++;
+          if (px >= coreLeft && px <= coreRight && py >= coreTop && py <= coreBottom) coreHits++;
+
+          for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              if (!ox && !oy) continue;
+              const nx = lx + ox;
+              const ny = ly + oy;
+              if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+              const next = ny * width + nx;
+              if (!strong[next] || visited[next]) continue;
+              visited[next] = 1;
+              queue[tail++] = next;
+            }
+          }
+        }
+
+        const cx = sumX / area;
+        const cy = sumY / area;
+        const distX = Math.abs(cx - centerX) / Math.max(1, rect.w);
+        const distY = Math.abs(cy - centerY) / Math.max(1, rect.h);
+        const coreRatio = coreHits / area;
+        const insideRatio = insideHits / area;
+        const score = area * (1 + coreRatio * 7 + insideRatio * 0.75 - distX * 1.6 - distY * 0.25);
+        components.push({ area, pixels, score, cx, cy, minX, minY, maxX, maxY });
+      }
+
+      if (!components.length) {
+        return { bounds: emptyBounds(rect), mask: null };
+      }
+
+      components.sort((a, b) => b.score - a.score);
+      const main = components[0];
+      const mask = new Uint8Array(total);
+      const weakThreshold = Math.max(1, Math.floor(threshold * 0.35));
+      let head = 0;
+      let tail = 0;
+      for (const index of main.pixels) {
+        if (mask[index]) continue;
+        mask[index] = 1;
+        queue[tail++] = index;
+      }
+
+      while (head < tail) {
+        const current = queue[head++];
+        const lx = current % width;
+        const ly = Math.floor(current / width);
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (!ox && !oy) continue;
+            const nx = lx + ox;
+            const ny = ly + oy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            const next = ny * width + nx;
+            if (mask[next]) continue;
+            const px = sampleRect.x + nx;
+            const py = sampleRect.y + ny;
+            const alpha = image.data[(py * image.width + px) * 4 + 3];
+            if (alpha < weakThreshold) continue;
+            mask[next] = 1;
+            queue[tail++] = next;
+          }
+        }
+      }
+
+      return { bounds: boundsFromMask(image, rect, sampleRect, mask), mask };
+    }
+
+    function emptyBounds(rect) {
+      return {
+        empty: true,
+        minX: Math.floor(rect.w / 2),
+        minY: Math.floor(rect.h / 2),
+        maxX: Math.floor(rect.w / 2),
+        maxY: Math.floor(rect.h / 2),
+        cx: rect.w / 2,
+        cy: rect.h / 2,
+      };
+    }
+
+    function boundsFromMask(image, rect, sampleRect, mask) {
+      let minX = rect.w;
+      let minY = rect.h;
+      let maxX = -1;
+      let maxY = -1;
+      let sumX = 0;
+      let sumY = 0;
+      let weight = 0;
+      for (let sy = 0; sy < sampleRect.h; sy++) {
+        for (let sx = 0; sx < sampleRect.w; sx++) {
+          if (!mask[sy * sampleRect.w + sx]) continue;
+          const px = sampleRect.x + sx;
+          const py = sampleRect.y + sy;
+          const alpha = image.data[(py * image.width + px) * 4 + 3];
+          const x = px - rect.x;
+          const y = py - rect.y;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+          sumX += x * alpha;
+          sumY += y * alpha;
+          weight += alpha;
+        }
+      }
+      if (maxX < minX || maxY < minY) return emptyBounds(rect);
+      return {
+        empty: false,
+        minX,
+        minY,
+        maxX,
+        maxY,
+        cx: weight ? sumX / weight : (minX + maxX) / 2,
+        cy: weight ? sumY / weight : (minY + maxY) / 2,
+      };
+    }
+
+    function detectBounds(image, rect, sampleRect, threshold) {
+      let minX = rect.w;
+      let minY = rect.h;
+      let maxX = -1;
+      let maxY = -1;
+      let sumX = 0;
+      let sumY = 0;
+      let weight = 0;
+      for (let sy = 0; sy < sampleRect.h; sy++) {
+        for (let sx = 0; sx < sampleRect.w; sx++) {
+          const px = sampleRect.x + sx;
+          const py = sampleRect.y + sy;
+          const p = (py * image.width + px) * 4;
+          const a = image.data[p + 3];
+          if (a < threshold) continue;
+          const x = px - rect.x;
+          const y = py - rect.y;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+          sumX += x * a;
+          sumY += y * a;
+          weight += a;
+        }
+      }
+      if (maxX < minX || maxY < minY) {
+        return emptyBounds(rect);
+      }
+      return {
+        empty: false,
+        minX, minY, maxX, maxY,
+        cx: weight ? sumX / weight : (minX + maxX) / 2,
+        cy: weight ? sumY / weight : (minY + maxY) / 2,
+      };
+    }
+
+    function getAnchor(bounds, rect, mode) {
+      if (mode === 'bottom') {
+        return { x: (bounds.minX + bounds.maxX) / 2, y: bounds.maxY };
+      }
+      if (mode === 'centroid') {
+        return { x: bounds.cx, y: bounds.cy };
+      }
+      return { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 };
+    }
+
+    function alignFrames() {
+      if (!state.source || !state.frames.length) analyze(true);
+      if (!state.source || !state.frames.length) return;
+
+      const refIndex = Math.max(0, Math.min(state.frames.length - 1, Number(el.reference.value) - 1));
+      const pad = Number(el.padding.value);
+      const bleed = Number(el.bleed.value);
+      const frameW = Math.max(...state.frames.map(frame => frame.rect.w));
+      const frameH = Math.max(...state.frames.map(frame => frame.rect.h));
+      const cols = Number(el.cols.value);
+      const rows = Number(el.rows.value);
+      const refCol = refIndex % cols;
+      const shifts = state.frames.map(frame => {
+        const row = Math.floor(frame.index / cols);
+        const rowRefIndex = el.rowAlign.checked ? Math.min(row * cols + refCol, state.frames.length - 1) : refIndex;
+        const ref = state.frames[rowRefIndex];
+        return {
+          dx: Math.round(ref.anchor.x - frame.anchor.x),
+          dy: Math.round(ref.anchor.y - frame.anchor.y),
+        };
+      });
+
+      let outFrameW = frameW;
+      let outFrameH = frameH;
+      let offsetX = 0;
+      let offsetY = 0;
+      const useExpandedOutput = el.expandOutput.checked || bleed > 0;
+      if (useExpandedOutput) {
+        const minDx = Math.min(...shifts.map(s => s.dx));
+        const maxDx = Math.max(...shifts.map(s => s.dx));
+        const minDy = Math.min(...shifts.map(s => s.dy));
+        const maxDy = Math.max(...shifts.map(s => s.dy));
+        offsetX = Math.max(0, -minDx) + pad;
+        offsetY = Math.max(0, -minDy) + pad;
+        outFrameW = frameW + Math.max(0, maxDx) + Math.max(0, -minDx) + pad * 2 + bleed * 2;
+        outFrameH = frameH + Math.max(0, maxDy) + Math.max(0, -minDy) + pad * 2 + bleed * 2;
+        offsetX += bleed;
+        offsetY += bleed;
+      }
+
+      const aligned = new ImageData(outFrameW * cols, outFrameH * rows);
+      for (const frame of state.frames) {
+        const shift = shifts[frame.index];
+        const col = frame.index % cols;
+        const row = Math.floor(frame.index / cols);
+        const copyRect = useExpandedOutput ? frame.sampleRect : frame.rect;
+        const baseX = col * outFrameW + Math.floor((frameW - frame.rect.w) / 2);
+        const baseY = row * outFrameH + Math.floor((frameH - frame.rect.h) / 2);
+        const dstBaseX = baseX + offsetX + shift.dx + (copyRect.x - frame.rect.x);
+        const dstBaseY = baseY + offsetY + shift.dy + (copyRect.y - frame.rect.y);
+        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY, useExpandedOutput ? frame.mask : null, frame.sampleRect);
+      }
+
+      state.aligned = aligned;
+      state.shifts = shifts;
+      setStatus(`已對齊 ${state.frames.length} 格。${el.rowAlign.checked ? '逐列對齊' : `基準格：${refIndex + 1}`}，輸出格：${outFrameW}x${outFrameH}`);
+      render();
+    }
+
+    function blitFrame(source, target, rect, dstX, dstY, mask = null, maskRect = rect) {
+      for (let y = 0; y < rect.h; y++) {
+        for (let x = 0; x < rect.w; x++) {
+          if (mask) {
+            const maskX = rect.x + x - maskRect.x;
+            const maskY = rect.y + y - maskRect.y;
+            if (maskX < 0 || maskY < 0 || maskX >= maskRect.w || maskY >= maskRect.h) continue;
+            if (!mask[maskY * maskRect.w + maskX]) continue;
+          }
+          const tx = dstX + x;
+          const ty = dstY + y;
+          if (tx < 0 || ty < 0 || tx >= target.width || ty >= target.height) continue;
+          const src = ((rect.y + y) * source.width + rect.x + x) * 4;
+          const dst = (ty * target.width + tx) * 4;
+          target.data[dst] = source.data[src];
+          target.data[dst + 1] = source.data[src + 1];
+          target.data[dst + 2] = source.data[src + 2];
+          target.data[dst + 3] = source.data[src + 3];
+        }
+      }
+    }
+
+    function togglePlay() {
+      state.playing = !state.playing;
+      document.getElementById('play-btn').textContent = state.playing ? '停止' : '播放';
+      if (state.playing) requestAnimationFrame(playLoop);
+    }
+
+    function playLoop(time) {
+      if (!state.playing) return;
+      const fps = Number(el.fps.value);
+      if (!state.playTimer || time - state.playTimer > 1000 / fps) {
+        state.playTimer = time;
+        const total = Math.max(1, state.frames.length);
+        state.playIndex = (state.playIndex + 1) % total;
+        drawPlayer();
+      }
+      requestAnimationFrame(playLoop);
+    }
+
+    function exportPng() {
+      const output = state.aligned || state.source;
+      if (!output) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = output.width;
+      canvas.height = output.height;
+      canvas.getContext('2d').putImageData(output, 0, 0);
+      canvas.toBlob(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${state.fileName}_aligned.png`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 500);
+        setStatus(`已匯出 ${link.download}`);
+      }, 'image/png');
+    }
+
+    function render() {
+      drawSheet(el.sourceCanvas, state.source, state.frames);
+      drawSheet(el.alignedCanvas, state.aligned, []);
+      drawPlayer();
+      el.sourceInfo.textContent = state.source ? `${state.source.width}x${state.source.height}` : '';
+      el.alignedInfo.textContent = state.aligned ? `${state.aligned.width}x${state.aligned.height}` : '';
+    }
+
+    function drawSheet(canvas, imageData, frames) {
+      const { ctx, width, height } = setupCanvas(canvas);
+      drawBackground(ctx, width, height);
+      if (!imageData) {
+        drawEmpty(ctx);
+        return;
+      }
+      const scale = Math.min(width / imageData.width, height / imageData.height, 1);
+      const w = imageData.width * scale;
+      const h = imageData.height * scale;
+      const x = (width - w) / 2;
+      const y = (height - h) / 2;
+      const temp = imageDataToCanvas(imageData);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(temp, x, y, w, h);
+      if (el.showBoxes.checked && frames.length) {
+        drawFrameGuides(ctx, frames, x, y, scale);
+      }
+    }
+
+    function drawPlayer() {
+      const { ctx, width, height } = setupCanvas(el.playerCanvas);
+      drawBackground(ctx, width, height);
+      const sheet = state.aligned || state.source;
+      if (!sheet || !state.frames.length) {
+        drawEmpty(ctx);
+        return;
+      }
+      const cols = Number(el.cols.value);
+      const rows = Number(el.rows.value);
+      const total = cols * rows;
+      const index = state.playIndex % total;
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const src = gridRect(sheet.width, sheet.height, cols, rows, col, row);
+      const temp = imageDataToCanvas(sheet);
+      const scale = Math.min(width / src.w, height / src.h, 2.5);
+      const dw = src.w * scale;
+      const dh = src.h * scale;
+      const dx = (width - dw) / 2;
+      const dy = (height - dh) / 2;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'nearest';
+      ctx.drawImage(temp, src.x, src.y, src.w, src.h, dx, dy, dw, dh);
+      el.frameInfo.textContent = `第 ${index + 1} / ${total} 格`;
+    }
+
+    function drawFrameGuides(ctx, frames, baseX, baseY, scale) {
+      ctx.save();
+      ctx.lineWidth = 1;
+      for (const frame of frames) {
+        const r = frame.rect;
+        const s = frame.sampleRect || frame.rect;
+        const b = frame.bounds;
+        const ax = baseX + (r.x + frame.anchor.x) * scale;
+        const ay = baseY + (r.y + frame.anchor.y) * scale;
+        if (s !== r) {
+          ctx.strokeStyle = 'rgba(255,255,255,.22)';
+          ctx.setLineDash([5, 4]);
+          ctx.strokeRect(baseX + s.x * scale, baseY + s.y * scale, s.w * scale, s.h * scale);
+          ctx.setLineDash([]);
+        }
+        ctx.strokeStyle = 'rgba(215,168,62,.45)';
+        ctx.strokeRect(baseX + r.x * scale, baseY + r.y * scale, r.w * scale, r.h * scale);
+        if (!b.empty) {
+          ctx.strokeStyle = 'rgba(120,224,189,.85)';
+          ctx.strokeRect(baseX + (r.x + b.minX) * scale, baseY + (r.y + b.minY) * scale, (b.maxX - b.minX + 1) * scale, (b.maxY - b.minY + 1) * scale);
+        }
+        ctx.fillStyle = '#ff5d6c';
+        ctx.beginPath();
+        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function setupCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      return { ctx, width: rect.width, height: rect.height };
+    }
+
+    function drawBackground(ctx, width, height) {
+      if (el.bgMode.value === 'black') {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+        return;
+      }
+      if (el.bgMode.value === 'white') {
+        ctx.fillStyle = '#f5f2eb';
+        ctx.fillRect(0, 0, width, height);
+        return;
+      }
+      if (el.bgMode.value === 'game') {
+        ctx.fillStyle = '#0d0912';
+        ctx.fillRect(0, 0, width, height);
+        return;
+      }
+      const tile = 24;
+      for (let y = 0; y < height; y += tile) {
+        for (let x = 0; x < width; x += tile) {
+          ctx.fillStyle = ((x / tile + y / tile) & 1) ? '#707076' : '#36363a';
+          ctx.fillRect(x, y, tile, tile);
+        }
+      }
+    }
+
+    function drawEmpty(ctx) {
+      ctx.fillStyle = '#b7aa90';
+      ctx.font = '16px Microsoft JhengHei, sans-serif';
+      ctx.fillText('拖放 spritesheet 到這裡', 18, 32);
+    }
+
+    function imageDataToCanvas(imageData) {
+      const canvas = document.createElement('canvas');
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      canvas.getContext('2d').putImageData(imageData, 0, 0);
+      return canvas;
+    }
+  </script>
+</body>
+</html>
