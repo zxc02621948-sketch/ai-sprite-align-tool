@@ -448,6 +448,7 @@
       frame.sampleRect = el.detectShape?.value === 'diagonal'
         ? frame.rect
         : expandRect(frame.rect, Number(el.bleed.value), state.source.width, state.source.height);
+      frame.copyRect = frame.sourceRect || frame.rect;
       state.aligned = null;
       analyze(true);
       setStatus(`已重設第 ${frame.index + 1} 格來源框。`);
@@ -582,6 +583,7 @@
       const dy = point.y - state.sourceDrag.startY;
       frame.sourceRect = resizeSourceRect(state.sourceDrag.original, state.sourceDrag.mode, dx, dy, state.source.width, state.source.height);
       frame.sampleRect = frame.sourceRect;
+      frame.copyRect = frame.sourceRect || frame.rect;
       const shape = detectFrameShape(state.source, frame.rect, frame.sampleRect, Number(el.alpha.value));
       frame.bounds = shape.bounds;
       frame.autoBounds = shape.bounds;
@@ -736,6 +738,7 @@
         const sourceRect = edit?.sourceRect || rect;
         const hasCustomSource = !!edit?.sourceRect;
         const sampleRect = hasCustomSource ? sourceRect : (diagonalDetection ? rect : expandRect(rect, bleed, state.source.width, state.source.height));
+        const copyRect = hasCustomSource ? sourceRect : rect;
         const shape = detectFrameShape(state.source, rect, sampleRect, Number(el.alpha.value));
         const bounds = shape.bounds;
         const anchor = getAnchor(bounds, rect, el.anchorMode.value);
@@ -744,6 +747,7 @@
           rect,
           sourceRect,
           sampleRect,
+          copyRect,
           autoBounds: bounds,
           bounds,
           autoAnchor: anchor,
@@ -1313,8 +1317,8 @@
       canvas.height = source.height;
       const ctx = canvas.getContext('2d');
       const temp = imageDataToCanvas(source);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      ctx.imageSmoothingEnabled = scale < 1;
+      if (ctx.imageSmoothingEnabled) ctx.imageSmoothingQuality = 'high';
       const bleed = Number(el.bleed.value) || 0;
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -1346,8 +1350,8 @@
       const originalSelectedFrameIndex = state.selectedFrameIndex;
       const cols = Number(el.cols.value);
       const rows = Number(el.rows.value);
-      const repackPercent = Math.max(1, Math.min(100, Number(el.repackScale.value) || 100));
-      const repackRatio = repackPercent / 100;
+      const repackPercent = 100;
+      const repackRatio = 1;
       const usingRepack = repackRatio < 1;
       if (usingRepack) {
         state.source = repackSpritesheet(originalSource, cols, rows, repackRatio);
@@ -1425,8 +1429,7 @@
         const baseY = row * outFrameH + Math.floor((frameH - frame.rect.h) / 2);
         const dstBaseX = baseX + offsetX + shift.dx + (copyRect.x - frame.rect.x);
         const dstBaseY = baseY + offsetY + shift.dy + (copyRect.y - frame.rect.y);
-        const outputMask = frame.manualMask ? getOutputMask(frame) : (useExpandedOutput ? frame.mask : null);
-        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY, outputMask, frame.sampleRect);
+        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY);
       }
 
       state.aligned = aligned;
@@ -1476,8 +1479,7 @@
     }
 
     function getFrameCopyRect(frame, useExpandedOutput) {
-      if (hasCustomSource(frame)) return frame.sourceRect;
-      return useExpandedOutput ? frame.sampleRect : frame.rect;
+      return useExpandedOutput ? (frame.copyRect || frame.rect) : frame.rect;
     }
 
     function getOutputMask(frame) {
@@ -1583,8 +1585,8 @@
       const dh = src.h * scale;
       const dx = (width - dw) / 2;
       const dy = (height - dh) / 2;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'nearest';
+      ctx.imageSmoothingEnabled = scale < 1;
+      if (ctx.imageSmoothingEnabled) ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(temp, src.x, src.y, src.w, src.h, dx, dy, dw, dh);
       el.frameInfo.textContent = `第 ${index + 1} / ${total} 格`;
     }
