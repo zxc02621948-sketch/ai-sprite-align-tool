@@ -78,13 +78,44 @@
       padding: 0 6px;
     }
 
-    select { padding: 0 8px; }
+    select {
+      padding: 0 8px;
+      background: #15120f;
+      color: var(--text);
+    }
+
+    option {
+      background: #15120f;
+      color: var(--text);
+    }
+
+    option:checked,
+    option:hover {
+      background: #3a2b15;
+      color: #fff2d8;
+    }
+
     label {
       display: inline-flex;
       gap: 5px;
       align-items: center;
       color: var(--muted);
       font-weight: 700;
+    }
+
+    .help {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-left: 4px;
+      border: 1px solid rgba(215,168,62,.55);
+      border-radius: 50%;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      cursor: help;
     }
 
     .file-btn input { display: none; }
@@ -100,7 +131,7 @@
       min-height: 0;
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-rows: minmax(260px, 1fr) 190px;
+      grid-template-rows: minmax(180px, 58vh) 190px;
       gap: 10px;
     }
 
@@ -123,7 +154,7 @@
     canvas {
       width: 100%;
       height: 100%;
-      min-height: 180px;
+      min-height: 140px;
       display: block;
       border: 1px solid rgba(255,255,255,.08);
       background: #111;
@@ -137,6 +168,10 @@
       min-height: 0;
       padding: 12px;
       overflow-y: auto;
+    }
+
+    .advanced {
+      display: none;
     }
 
     .control {
@@ -186,29 +221,30 @@
   <div class="app" id="app">
     <div class="toolbar">
       <label class="file-btn">
-        <button type="button">開啟圖檔</button>
+        <button type="button" title="載入要整理的 spritesheet。">開啟圖檔</button>
         <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
       </label>
-      <button id="analyze-btn" type="button">分析格子</button>
-      <button id="align-btn" type="button">自動對齊</button>
-      <button id="play-btn" type="button">播放</button>
-      <button id="export-btn" type="button">匯出 PNG</button>
-      <label>欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
-      <label>列 <input id="rows" type="number" min="1" max="32" value="2"></label>
-      <label>基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
+      <button id="align-btn" type="button" title="依目前來源框與錨點設定產生新的 spritesheet。">自動對齊</button>
+      <button id="play-btn" type="button" title="播放目前對齊結果；尚未對齊時播放原圖。">播放</button>
+      <button id="export-btn" type="button" title="匯出右側目前的 spritesheet。">匯出 PNG</button>
+      <label title="spritesheet 水平方向的格數。">欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
+      <label title="spritesheet 垂直方向的格數。">列 <input id="rows" type="number" min="1" max="32" value="2"></label>
+      <label title="未啟用共享命中點時，其他格會對齊到這一格。">基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
+      <span class="help" title="未啟用共享命中點時，其他格會對齊到這一格；啟用逐列對齊時，每一列會用同欄基準格。">?</span>
       <label>對齊
-        <select id="anchor-mode">
-          <option value="center">主體中心</option>
-          <option value="bottom" selected>底部中心</option>
-          <option value="centroid">視覺重心</option>
+        <select id="anchor-mode" title="決定每格用哪個點來對齊。特效通常先用底部中心；斬擊或光球可試中心或視覺重心。">
+          <option value="center" title="用偵測範圍的中心對齊，適合中心穩定的特效。">主體中心</option>
+          <option value="bottom" selected title="用偵測範圍的底部中心對齊，適合落地爆炸、地面特效。">底部中心</option>
+          <option value="centroid" title="用不透明像素的重心對齊，適合形狀不規則但亮度分布穩定的特效。">視覺重心</option>
         </select>
       </label>
+      <span class="help" title="錨點會影響播放是否跳動。底部中心適合地面特效，主體中心適合一般斬擊，視覺重心適合不規則光效。">?</span>
       <label>底色
-        <select id="bg-mode">
-          <option value="checker">棋盤格</option>
-          <option value="game">遊戲暗底</option>
-          <option value="black">黑底</option>
-          <option value="white">白底</option>
+        <select id="bg-mode" title="只影響預覽背景，不會改變輸出的透明度。">
+          <option value="checker" title="用棋盤格檢查透明背景。">棋盤格</option>
+          <option value="game" title="用接近遊戲內的暗底預覽亮色特效。">遊戲暗底</option>
+          <option value="black" title="用黑色背景檢查亮色邊緣。">黑底</option>
+          <option value="white" title="用白色背景檢查暗色雜邊。">白底</option>
         </select>
       </label>
     </div>
@@ -232,31 +268,78 @@
       <aside class="panel side">
         <div class="panel-title">設定</div>
         <div>
-          <div class="control">
+          <div class="control advanced">
             <div class="control-head"><span>Alpha 偵測門檻</span><b id="alpha-label">12</b></div>
             <input id="alpha-threshold" type="range" min="1" max="180" value="12">
           </div>
-          <div class="control">
+          <div class="control advanced">
             <div class="control-head"><span>保留格邊距</span><b id="padding-label">0</b></div>
             <input id="frame-padding" type="range" min="0" max="80" value="0">
           </div>
           <div class="control">
             <div class="control-head"><span>取樣外溢邊距</span><b id="bleed-label">24</b></div>
-            <input id="bleed-padding" type="range" min="0" max="120" value="24">
+            <input id="bleed-padding" type="range" min="0" max="120" value="24" title="來源框和自動偵測可向格線外看的距離。尾韻超出平均格線時可調大。">
           </div>
           <div class="control">
             <div class="control-head"><span>播放速度 FPS</span><b id="fps-label">8</b></div>
-            <input id="fps" type="range" min="1" max="24" value="8">
+            <input id="fps" type="range" min="1" max="24" value="8" title="動畫預覽播放速度，不影響輸出檔。">
           </div>
-          <label><input id="show-boxes" type="checkbox" checked> 顯示偵測框與錨點</label>
+          <label title="顯示來源框、偵測框和錨點，方便檢查對齊問題。"><input id="show-boxes" type="checkbox" checked> 顯示偵測框與錨點</label>
+          <span class="help" title="開啟來源框編輯時會自動簡化畫面，只保留來源框，避免框線互相干擾。">?</span>
           <br><br>
-          <label><input id="row-align" type="checkbox" checked> 逐列對齊</label>
+          <label class="advanced">
+            偵測形狀
+            <select id="detect-shape">
+              <option value="rect">矩形</option>
+              <option value="diagonal">斜向特效</option>
+            </select>
+          </label>
+          <br class="advanced"><br class="advanced">
+          <label title="每一列各自使用同欄基準格對齊。上下排是不同段落時有用；若上下排要連成同一段動畫，可能會造成跳動。"><input id="row-align" type="checkbox" checked> 逐列對齊</label>
+          <span class="help" title="4x2 時，開啟後第 1 列用第 1 格作基準，第 2 列用第 5 格作基準；關閉時全部都用基準格。共享命中點開啟時通常可關掉。">?</span>
           <br><br>
-          <label><input id="shared-impact" type="checkbox"> 共享命中點（跨列接續）</label>
+          <label title="把所有格對到同一個畫面命中點，適合上下排接續播放，能減少跨列跳動。"><input id="shared-impact" type="checkbox"> 共享命中點（跨列接續）</label>
+          <span class="help" title="建議用於同一段動畫被排成多列的 spritesheet。若開啟後仍微飄，可搭配手動來源框或手動錨點修正。">?</span>
           <br><br>
-          <label><input id="expand-output" type="checkbox" checked> 自動擴大格子避免裁切</label>
+          <label class="advanced"><input id="expand-output" type="checkbox" checked> 自動擴大格子避免裁切</label>
+          <br class="advanced"><br class="advanced">
+          <label class="advanced"><input id="subject-mask" type="checkbox" checked> 只保留每格主體，避免撈到隔壁</label>
+          <br class="advanced"><br class="advanced">
+          <label title="開啟後可拖曳每一幀的藍色來源框，手動把框外尾韻納入，或避開隔壁幀。"><input id="edit-source" type="checkbox"> 編輯來源框</label>
+          <span class="help" title="拖框內可移動來源框，拖邊或角可拉伸。平均格線只當初始參考，輸出會用你調整後的來源框取圖。">?</span>
+          <button id="reset-source-rect" type="button" title="把目前選中的來源框恢復成原始平均格線。">重設來源框</button>
           <br><br>
-          <label><input id="subject-mask" type="checkbox" checked> 只保留每格主體，避免撈到隔壁</label>
+          <label class="advanced"><input id="edit-mask" type="checkbox"> 編輯遮罩</label>
+          <br class="advanced"><br class="advanced">
+          <label class="advanced">
+            遮罩格數
+            <select id="mask-grid-size">
+              <option value="8">8x8</option>
+              <option value="12">12x12</option>
+              <option value="16" selected>16x16</option>
+              <option value="24">24x24</option>
+              <option value="32">32x32</option>
+            </select>
+          </label>
+          <br class="advanced"><br class="advanced">
+          <label class="advanced">
+            修正用途
+            <select id="mask-edit-mode">
+              <option value="visual">只修畫面</option>
+              <option value="anchor">遮罩重算錨點</option>
+              <option value="manual-anchor">手動錨點</option>
+            </select>
+          </label>
+          <br class="advanced"><br class="advanced">
+          <label class="advanced">
+            縮放留白
+            <select id="repack-scale">
+              <option value="100" selected>100%</option>
+              <option value="90">90%</option>
+              <option value="80">80%</option>
+              <option value="75">75%</option>
+            </select>
+          </label>
           <div class="hint">
             <br>
             使用方式：<br>
@@ -283,6 +366,8 @@
       aligned: null,
       frames: [],
       shifts: [],
+      selectedFrameIndex: -1,
+      sourceDrag: null,
       playing: false,
       playIndex: 0,
       playTimer: 0,
@@ -305,10 +390,16 @@
       bleed: document.getElementById('bleed-padding'),
       fps: document.getElementById('fps'),
       showBoxes: document.getElementById('show-boxes'),
+      detectShape: document.getElementById('detect-shape'),
       rowAlign: document.getElementById('row-align'),
       sharedImpact: document.getElementById('shared-impact'),
       expandOutput: document.getElementById('expand-output'),
       subjectMask: document.getElementById('subject-mask'),
+      editSource: document.getElementById('edit-source'),
+      editMask: document.getElementById('edit-mask'),
+      maskGridSize: document.getElementById('mask-grid-size'),
+      maskEditMode: document.getElementById('mask-edit-mode'),
+      repackScale: document.getElementById('repack-scale'),
       alphaLabel: document.getElementById('alpha-label'),
       paddingLabel: document.getElementById('padding-label'),
       bleedLabel: document.getElementById('bleed-label'),
@@ -322,17 +413,46 @@
     el.file.addEventListener('change', () => {
       if (el.file.files[0]) loadFile(el.file.files[0]);
     });
-    document.getElementById('analyze-btn').addEventListener('click', analyze);
+    document.getElementById('analyze-btn')?.addEventListener('click', analyze);
     document.getElementById('align-btn').addEventListener('click', alignFrames);
     document.getElementById('play-btn').addEventListener('click', togglePlay);
     document.getElementById('export-btn').addEventListener('click', exportPng);
 
-    for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask]) {
+    for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.detectShape, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask, el.editSource, el.editMask, el.maskEditMode]) {
       input.addEventListener('change', () => {
         analyze(true);
         render();
       });
     }
+    el.repackScale.addEventListener('change', () => {
+      state.aligned = null;
+      analyze(true);
+      render();
+    });
+    el.maskGridSize.addEventListener('change', () => {
+      for (const frame of state.frames) frame.manualMask = null;
+      render();
+    });
+    el.sourceCanvas.addEventListener('click', handleSourceCanvasClick);
+    el.sourceCanvas.addEventListener('mousedown', handleSourceCanvasMouseDown);
+    window.addEventListener('mousemove', handleSourceCanvasMouseMove);
+    window.addEventListener('mouseup', handleSourceCanvasMouseUp);
+    el.sourceCanvas.addEventListener('contextmenu', event => {
+      event.preventDefault();
+      handleSourceCanvasClick(event, true);
+    });
+    document.getElementById('reset-source-rect').addEventListener('click', () => {
+      const frame = state.frames[state.selectedFrameIndex];
+      if (!frame) return;
+      frame.sourceRect = frame.rect;
+      frame.sampleRect = el.detectShape?.value === 'diagonal'
+        ? frame.rect
+        : expandRect(frame.rect, Number(el.bleed.value), state.source.width, state.source.height);
+      state.aligned = null;
+      analyze(true);
+      setStatus(`已重設第 ${frame.index + 1} 格來源框。`);
+      render();
+    });
     for (const [input, label] of [[el.alpha, el.alphaLabel], [el.padding, el.paddingLabel], [el.bleed, el.bleedLabel], [el.fps, el.fpsLabel]]) {
       input.addEventListener('input', () => {
         label.textContent = input.value;
@@ -392,6 +512,188 @@
       return ctx.getImageData(0, 0, canvas.width, canvas.height);
     }
 
+    function handleSourceCanvasClick(event, forceRemove = false) {
+      if (!state.source || !state.frames.length) return;
+      if (el.editSource.checked) return;
+      const point = getCanvasImagePoint(el.sourceCanvas, event, state.source);
+      if (!point) return;
+      const frame = findEditableFrameAtPoint(point.x, point.y);
+      if (!frame) return;
+      state.selectedFrameIndex = frame.index;
+
+      if (!el.editMask.checked) {
+        render();
+        return;
+      }
+
+      if (el.maskEditMode.value === 'manual-anchor') {
+        frame.manualAnchor = {
+          x: Math.max(0, Math.min(frame.rect.w - 1, point.x - frame.rect.x)),
+          y: Math.max(0, Math.min(frame.rect.h - 1, point.y - frame.rect.y)),
+        };
+        applyManualFrameEdit(frame);
+        state.aligned = null;
+        setStatus(`已設定第 ${frame.index + 1} 格手動錨點。`);
+        render();
+        return;
+      }
+
+      ensureManualMask(frame);
+      frame.manualAffectsAnchor = el.maskEditMode.value === 'anchor';
+      const maskRect = manualMaskRect(frame);
+      const cell = getMaskCellAt(frame, point.x - maskRect.x, point.y - maskRect.y);
+      if (!cell) return;
+      const index = cell.y * frame.manualMask.cols + cell.x;
+      frame.manualMask.cells[index] = forceRemove || event.altKey ? false : !frame.manualMask.cells[index];
+      applyManualFrameEdit(frame);
+      state.aligned = null;
+      setStatus(`已修正第 ${frame.index + 1} 格遮罩。${frame.manualAffectsAnchor ? '會重算錨點。' : '只修畫面。'}`);
+      render();
+    }
+
+    function handleSourceCanvasMouseDown(event) {
+      if (!el.editSource.checked || !state.source || !state.frames.length) return;
+      const point = getCanvasImagePoint(el.sourceCanvas, event, state.source);
+      if (!point) return;
+      const frame = findSourceFrameAtPoint(point.x, point.y);
+      if (!frame) return;
+      state.selectedFrameIndex = frame.index;
+      if (!frame.sourceRect) frame.sourceRect = frame.rect;
+      const mode = getSourceRectDragMode(frame, point.x, point.y);
+      state.sourceDrag = {
+        frameIndex: frame.index,
+        mode,
+        startX: point.x,
+        startY: point.y,
+        original: { ...frame.sourceRect },
+      };
+      state.aligned = null;
+      event.preventDefault();
+      render();
+    }
+
+    function handleSourceCanvasMouseMove(event) {
+      if (!state.sourceDrag || !state.source) return;
+      const point = getCanvasImagePoint(el.sourceCanvas, event, state.source);
+      if (!point) return;
+      const frame = state.frames[state.sourceDrag.frameIndex];
+      if (!frame) return;
+      const dx = point.x - state.sourceDrag.startX;
+      const dy = point.y - state.sourceDrag.startY;
+      frame.sourceRect = resizeSourceRect(state.sourceDrag.original, state.sourceDrag.mode, dx, dy, state.source.width, state.source.height);
+      frame.sampleRect = frame.sourceRect;
+      const shape = detectFrameShape(state.source, frame.rect, frame.sampleRect, Number(el.alpha.value));
+      frame.bounds = shape.bounds;
+      frame.autoBounds = shape.bounds;
+      frame.anchor = getAnchor(shape.bounds, frame.rect, el.anchorMode.value);
+      frame.autoAnchor = frame.anchor;
+      frame.mask = shape.mask;
+      frame.orientedBox = shape.orientedBox;
+      applyManualFrameEdit(frame);
+      render();
+    }
+
+    function handleSourceCanvasMouseUp() {
+      if (!state.sourceDrag) return;
+      const frame = state.frames[state.sourceDrag.frameIndex];
+      state.sourceDrag = null;
+      state.aligned = null;
+      if (frame) setStatus(`已調整第 ${frame.index + 1} 格來源框。`);
+      render();
+    }
+
+    function findSourceFrameAtPoint(x, y) {
+      const selected = state.frames[state.selectedFrameIndex];
+      if (selected && rectContains(selected.sourceRect || selected.rect, x, y)) return selected;
+      const custom = state.frames.find(frame => rectContains(frame.sourceRect || frame.rect, x, y));
+      return custom || findFrameAtPoint(x, y);
+    }
+
+    function getSourceRectDragMode(frame, x, y) {
+      const rect = frame.sourceRect || frame.rect;
+      const handle = Math.max(6, Math.min(rect.w, rect.h) * 0.08);
+      const nearLeft = Math.abs(x - rect.x) <= handle;
+      const nearRight = Math.abs(x - (rect.x + rect.w)) <= handle;
+      const nearTop = Math.abs(y - rect.y) <= handle;
+      const nearBottom = Math.abs(y - (rect.y + rect.h)) <= handle;
+      let mode = '';
+      if (nearTop) mode += 'n';
+      if (nearBottom) mode += 's';
+      if (nearLeft) mode += 'w';
+      if (nearRight) mode += 'e';
+      return mode || 'move';
+    }
+
+    function resizeSourceRect(original, mode, dx, dy, imageW, imageH) {
+      const minSize = 8;
+      let left = original.x;
+      let top = original.y;
+      let right = original.x + original.w;
+      let bottom = original.y + original.h;
+      if (mode === 'move') {
+        const w = original.w;
+        const h = original.h;
+        left = Math.max(0, Math.min(imageW - w, original.x + dx));
+        top = Math.max(0, Math.min(imageH - h, original.y + dy));
+        return { x: Math.round(left), y: Math.round(top), w: Math.round(w), h: Math.round(h) };
+      }
+      if (mode.includes('w')) left += dx;
+      if (mode.includes('e')) right += dx;
+      if (mode.includes('n')) top += dy;
+      if (mode.includes('s')) bottom += dy;
+      left = Math.max(0, Math.min(left, right - minSize));
+      right = Math.min(imageW, Math.max(right, left + minSize));
+      top = Math.max(0, Math.min(top, bottom - minSize));
+      bottom = Math.min(imageH, Math.max(bottom, top + minSize));
+      return {
+        x: Math.round(left),
+        y: Math.round(top),
+        w: Math.round(right - left),
+        h: Math.round(bottom - top),
+      };
+    }
+
+    function getCanvasImagePoint(canvas, event, imageData) {
+      const rect = canvas.getBoundingClientRect();
+      const scale = Math.min(rect.width / imageData.width, rect.height / imageData.height, 1);
+      const drawW = imageData.width * scale;
+      const drawH = imageData.height * scale;
+      const offsetX = (rect.width - drawW) / 2;
+      const offsetY = (rect.height - drawH) / 2;
+      const x = (event.clientX - rect.left - offsetX) / scale;
+      const y = (event.clientY - rect.top - offsetY) / scale;
+      if (x < 0 || y < 0 || x >= imageData.width || y >= imageData.height) return null;
+      return { x, y };
+    }
+
+    function findFrameAtPoint(x, y) {
+      return state.frames.find(frame =>
+        x >= frame.rect.x && x < frame.rect.x + frame.rect.w &&
+        y >= frame.rect.y && y < frame.rect.y + frame.rect.h
+      );
+    }
+
+    function findEditableFrameAtPoint(x, y) {
+      const selected = state.frames[state.selectedFrameIndex];
+      if (el.editMask.checked && selected && rectContains(manualMaskRect(selected), x, y)) return selected;
+      return findFrameAtPoint(x, y);
+    }
+
+    function rectContains(rect, x, y) {
+      return x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h;
+    }
+
+    function getMaskCellAt(frame, localX, localY) {
+      if (!frame.manualMask) return null;
+      const cols = frame.manualMask.cols;
+      const rows = frame.manualMask.rows;
+      const rect = manualMaskRect(frame);
+      const x = Math.floor(localX / rect.w * cols);
+      const y = Math.floor(localY / rect.h * rows);
+      if (x < 0 || y < 0 || x >= cols || y >= rows) return null;
+      return { x, y };
+    }
+
     function analyze(silent = false) {
       if (!state.source) return;
       const cols = Math.max(1, Number(el.cols.value) || 1);
@@ -400,17 +702,45 @@
       el.reference.max = String(total);
       if (Number(el.reference.value) > total) el.reference.value = String(total);
 
+      const previousEdits = new Map(state.frames.map(frame => [frame.index, {
+        sourceRect: frame.sourceRect,
+        manualMask: frame.manualMask,
+        manualAnchor: frame.manualAnchor,
+        manualAffectsAnchor: frame.manualAffectsAnchor,
+      }]));
       state.frames = [];
       const bleed = Number(el.bleed.value);
+      const diagonalDetection = el.detectShape?.value === 'diagonal';
       for (let index = 0; index < total; index++) {
         const col = index % cols;
         const row = Math.floor(index / cols);
         const rect = gridRect(state.source.width, state.source.height, cols, rows, col, row);
-        const sampleRect = expandRect(rect, bleed, state.source.width, state.source.height);
+        const edit = previousEdits.get(index);
+        const sourceRect = edit?.sourceRect || rect;
+        const hasCustomSource = !!edit?.sourceRect;
+        const sampleRect = hasCustomSource ? sourceRect : (diagonalDetection ? rect : expandRect(rect, bleed, state.source.width, state.source.height));
         const shape = detectFrameShape(state.source, rect, sampleRect, Number(el.alpha.value));
         const bounds = shape.bounds;
         const anchor = getAnchor(bounds, rect, el.anchorMode.value);
-        state.frames.push({ index, rect, sampleRect, bounds, anchor, mask: shape.mask });
+        const frame = {
+          index,
+          rect,
+          sourceRect,
+          sampleRect,
+          autoBounds: bounds,
+          bounds,
+          autoAnchor: anchor,
+          anchor,
+          mask: shape.mask,
+          orientedBox: shape.orientedBox,
+        };
+        if (edit) {
+          frame.manualMask = edit.manualMask;
+          frame.manualAnchor = edit.manualAnchor;
+          frame.manualAffectsAnchor = edit.manualAffectsAnchor;
+          applyManualFrameEdit(frame);
+        }
+        state.frames.push(frame);
       }
       if (!silent) setStatus(`分析完成：${cols}x${rows}，共 ${total} 格。`);
       render();
@@ -433,6 +763,10 @@
     }
 
     function detectFrameShape(image, rect, sampleRect, threshold) {
+      if (el.detectShape?.value === 'diagonal') {
+        return detectDiagonalShape(image, rect, sampleRect, threshold);
+      }
+
       if (!el.subjectMask || !el.subjectMask.checked) {
         return { bounds: detectBounds(image, rect, sampleRect, threshold), mask: null };
       }
@@ -559,6 +893,306 @@
       return { bounds: boundsFromMask(image, rect, sampleRect, mask), mask };
     }
 
+    function detectDiagonalShape(image, rect, sampleRect, threshold) {
+      const width = sampleRect.w;
+      const height = sampleRect.h;
+      const total = width * height;
+      const mask = new Uint8Array(total);
+      const weakThreshold = Math.max(1, Math.floor(threshold * 0.18));
+      const points = pickMainDiagonalPixels(image, rect, sampleRect, Math.max(1, threshold));
+      let sumW = 0;
+      let sumX = 0;
+      let sumY = 0;
+
+      for (const point of points) {
+        sumW += point.weight;
+        sumX += point.x * point.weight;
+        sumY += point.y * point.weight;
+      }
+
+      if (!points.length || !sumW) {
+        return { bounds: detectBounds(image, rect, sampleRect, threshold), mask: null, orientedBox: null };
+      }
+
+      const cx = sumX / sumW;
+      const cy = sumY / sumW;
+      let sumXX = 0;
+      let sumYY = 0;
+      let sumXY = 0;
+      for (const point of points) {
+        const dx = point.x - cx;
+        const dy = point.y - cy;
+        sumXX += dx * dx * point.weight;
+        sumYY += dy * dy * point.weight;
+        sumXY += dx * dy * point.weight;
+      }
+      const angle = 0.5 * Math.atan2(2 * sumXY, sumXX - sumYY);
+      const ux = Number.isFinite(angle) ? Math.cos(angle) : 1;
+      const uy = Number.isFinite(angle) ? Math.sin(angle) : 0;
+      const nx = -uy;
+      const ny = ux;
+      let minT = Infinity;
+      let maxT = -Infinity;
+      let minN = Infinity;
+      let maxN = -Infinity;
+      for (const point of points) {
+        const dx = point.x - cx;
+        const dy = point.y - cy;
+        const t = dx * ux + dy * uy;
+        const n = dx * nx + dy * ny;
+        minT = Math.min(minT, t);
+        maxT = Math.max(maxT, t);
+        minN = Math.min(minN, n);
+        maxN = Math.max(maxN, n);
+      }
+
+      const padT = Math.max(2, Math.min(rect.w, rect.h) * 0.025);
+      const padN = Math.max(3, Math.min(rect.w, rect.h) * 0.045);
+      minT -= padT;
+      maxT += padT;
+      minN -= padN;
+      maxN += padN;
+
+      const queue = new Int32Array(total);
+      let head = 0;
+      let tail = 0;
+      for (const point of points) {
+        const x = point.x - sampleRect.x;
+        const y = point.y - sampleRect.y;
+        if (x < 0 || y < 0 || x >= width || y >= height) continue;
+        const index = y * width + x;
+        if (mask[index]) continue;
+        mask[index] = 1;
+        queue[tail++] = index;
+      }
+      while (head < tail) {
+        const current = queue[head++];
+        const x = current % width;
+        const y = Math.floor(current / width);
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (!ox && !oy) continue;
+            const nxp = x + ox;
+            const nyp = y + oy;
+            if (nxp < 0 || nyp < 0 || nxp >= width || nyp >= height) continue;
+            const next = nyp * width + nxp;
+            if (mask[next]) continue;
+            const px = sampleRect.x + nxp;
+            const py = sampleRect.y + nyp;
+            if (px < rect.x || px >= rect.x + rect.w || py < rect.y || py >= rect.y + rect.h) continue;
+            const alpha = image.data[(py * image.width + px) * 4 + 3];
+            if (alpha < weakThreshold) continue;
+            const dx = px - cx;
+            const dy = py - cy;
+            const t = dx * ux + dy * uy;
+            const n = dx * nx + dy * ny;
+            if (t < minT || t > maxT || n < minN || n > maxN) continue;
+            mask[next] = 1;
+            queue[tail++] = next;
+          }
+        }
+      }
+
+      const orientedBox = {
+        points: [
+          orientedPoint(cx, cy, ux, uy, nx, ny, minT, minN, rect),
+          orientedPoint(cx, cy, ux, uy, nx, ny, maxT, minN, rect),
+          orientedPoint(cx, cy, ux, uy, nx, ny, maxT, maxN, rect),
+          orientedPoint(cx, cy, ux, uy, nx, ny, minT, maxN, rect),
+        ],
+      };
+
+      return {
+        bounds: boundsFromMask(image, rect, sampleRect, mask),
+        mask: el.subjectMask?.checked ? mask : null,
+        orientedBox,
+      };
+    }
+
+    function pickMainDiagonalPixels(image, rect, sampleRect, threshold) {
+      const width = sampleRect.w;
+      const height = sampleRect.h;
+      const total = width * height;
+      const strong = new Uint8Array(total);
+      const visited = new Uint8Array(total);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const px = sampleRect.x + x;
+          const py = sampleRect.y + y;
+          if (px < rect.x || px >= rect.x + rect.w || py < rect.y || py >= rect.y + rect.h) continue;
+          const alpha = image.data[(py * image.width + px) * 4 + 3];
+          if (alpha >= threshold) strong[y * width + x] = 1;
+        }
+      }
+
+      const queue = new Int32Array(total);
+      const components = [];
+      for (let start = 0; start < total; start++) {
+        if (!strong[start] || visited[start]) continue;
+        let head = 0;
+        let tail = 0;
+        let area = 0;
+        let sumX = 0;
+        let sumY = 0;
+        let alphaSum = 0;
+        const pixels = [];
+        visited[start] = 1;
+        queue[tail++] = start;
+        while (head < tail) {
+          const current = queue[head++];
+          const lx = current % width;
+          const ly = Math.floor(current / width);
+          const px = sampleRect.x + lx;
+          const py = sampleRect.y + ly;
+          const alpha = image.data[(py * image.width + px) * 4 + 3];
+          pixels.push({ x: px, y: py, weight: Math.max(1, alpha) });
+          area++;
+          sumX += px;
+          sumY += py;
+          alphaSum += alpha;
+          for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              if (!ox && !oy) continue;
+              const nx = lx + ox;
+              const ny = ly + oy;
+              if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+              const next = ny * width + nx;
+              if (!strong[next] || visited[next]) continue;
+              visited[next] = 1;
+              queue[tail++] = next;
+            }
+          }
+        }
+        const cx = sumX / area;
+        const cy = sumY / area;
+        const dx = Math.abs(cx - centerX) / Math.max(1, rect.w);
+        const dy = Math.abs(cy - centerY) / Math.max(1, rect.h);
+        const centerScore = Math.max(0, 1 - Math.hypot(dx * 1.15, dy * 1.55));
+        components.push({
+          pixels,
+          score: alphaSum * (0.35 + centerScore * 2.4),
+        });
+      }
+
+      if (!components.length) return [];
+      components.sort((a, b) => b.score - a.score);
+      return components[0].pixels;
+    }
+
+    function orientedPoint(cx, cy, ux, uy, nx, ny, t, n, rect) {
+      return {
+        x: cx + ux * t + nx * n - rect.x,
+        y: cy + uy * t + ny * n - rect.y,
+      };
+    }
+
+    function ensureManualMask(frame) {
+      const size = Math.max(2, Number(el.maskGridSize.value) || 16);
+      if (frame.manualMask && frame.manualMask.cols === size && frame.manualMask.rows === size) return;
+      const cells = new Array(size * size).fill(false);
+      const mask = frame.mask;
+      const maskRect = manualMaskRect(frame);
+      for (let cy = 0; cy < size; cy++) {
+        for (let cx = 0; cx < size; cx++) {
+          const startX = Math.floor(cx * maskRect.w / size);
+          const endX = Math.ceil((cx + 1) * maskRect.w / size);
+          const startY = Math.floor(cy * maskRect.h / size);
+          const endY = Math.ceil((cy + 1) * maskRect.h / size);
+          let hit = false;
+          for (let y = startY; y < endY && !hit; y++) {
+            for (let x = startX; x < endX; x++) {
+              const px = maskRect.x + x;
+              const py = maskRect.y + y;
+              if (mask) {
+                const mx = px - maskRect.x;
+                const my = py - maskRect.y;
+                if (mx < 0 || my < 0 || mx >= maskRect.w || my >= maskRect.h) continue;
+                if (mask[my * maskRect.w + mx]) {
+                  hit = true;
+                  break;
+                }
+              } else {
+                const alpha = state.source.data[(py * state.source.width + px) * 4 + 3];
+                if (alpha >= Number(el.alpha.value)) {
+                  hit = true;
+                  break;
+                }
+              }
+            }
+          }
+          cells[cy * size + cx] = hit;
+        }
+      }
+      frame.manualMask = { cols: size, rows: size, cells };
+    }
+
+    function manualMaskRect(frame) {
+      const bleed = Number(el.bleed.value) || 0;
+      return expandRect(frame.rect, bleed, state.source.width, state.source.height);
+    }
+
+    function applyManualFrameEdit(frame) {
+      frame.bounds = frame.autoBounds || frame.bounds;
+      frame.anchor = frame.autoAnchor || frame.anchor;
+      if (frame.manualMask && frame.manualAffectsAnchor) {
+        const bounds = boundsFromManualMask(frame);
+        frame.bounds = bounds;
+        frame.anchor = getAnchor(bounds, frame.rect, el.anchorMode.value);
+      }
+      if (frame.manualAnchor) {
+        frame.anchor = frame.manualAnchor;
+      }
+    }
+
+    function boundsFromManualMask(frame) {
+      if (!frame.manualMask || !state.source) return frame.autoBounds || frame.bounds;
+      let minX = frame.rect.w;
+      let minY = frame.rect.h;
+      let maxX = -1;
+      let maxY = -1;
+      let sumX = 0;
+      let sumY = 0;
+      let weight = 0;
+      const maskRect = manualMaskRect(frame);
+      for (let py = maskRect.y; py < maskRect.y + maskRect.h; py++) {
+        for (let px = maskRect.x; px < maskRect.x + maskRect.w; px++) {
+          if (!manualMaskContains(frame, px, py)) continue;
+          const alpha = state.source.data[(py * state.source.width + px) * 4 + 3];
+          if (alpha < Number(el.alpha.value)) continue;
+          const x = px - frame.rect.x;
+          const y = py - frame.rect.y;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+          sumX += x * alpha;
+          sumY += y * alpha;
+          weight += alpha;
+        }
+      }
+      if (maxX < minX || maxY < minY) return emptyBounds(frame.rect);
+      return {
+        empty: false,
+        minX, minY, maxX, maxY,
+        cx: weight ? sumX / weight : (minX + maxX) / 2,
+        cy: weight ? sumY / weight : (minY + maxY) / 2,
+      };
+    }
+
+    function manualMaskContains(frame, px, py) {
+      if (!frame.manualMask) return false;
+      const rect = manualMaskRect(frame);
+      if (px < rect.x || px >= rect.x + rect.w || py < rect.y || py >= rect.y + rect.h) return false;
+      const localX = px - rect.x;
+      const localY = py - rect.y;
+      const cellX = Math.floor(localX / rect.w * frame.manualMask.cols);
+      const cellY = Math.floor(localY / rect.h * frame.manualMask.rows);
+      if (cellX < 0 || cellY < 0 || cellX >= frame.manualMask.cols || cellY >= frame.manualMask.rows) return false;
+      return !!frame.manualMask.cells[cellY * frame.manualMask.cols + cellX];
+    }
+
     function emptyBounds(rect) {
       return {
         empty: true,
@@ -655,23 +1289,68 @@
       return { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 };
     }
 
+    function repackSpritesheet(source, cols, rows, scaleRatio) {
+      if (!source || scaleRatio >= 1) return source;
+      const canvas = document.createElement('canvas');
+      canvas.width = source.width;
+      canvas.height = source.height;
+      const ctx = canvas.getContext('2d');
+      const temp = imageDataToCanvas(source);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      const bleed = Number(el.bleed.value) || 0;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const rect = gridRect(source.width, source.height, cols, rows, col, row);
+          const sampleRect = expandRect(rect, bleed, source.width, source.height);
+          const dw = Math.max(1, Math.round(sampleRect.w * scaleRatio));
+          const dh = Math.max(1, Math.round(sampleRect.h * scaleRatio));
+          const dx = rect.x + Math.round((rect.w - dw) / 2);
+          const dy = rect.y + Math.round((rect.h - dh) / 2);
+          ctx.drawImage(temp, sampleRect.x, sampleRect.y, sampleRect.w, sampleRect.h, dx, dy, dw, dh);
+        }
+      }
+      return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+
+    function getRepackPreview() {
+      if (!state.source) return null;
+      const repackPercent = Math.max(1, Math.min(100, Number(el.repackScale.value) || 100));
+      if (repackPercent >= 100) return null;
+      return repackSpritesheet(state.source, Number(el.cols.value), Number(el.rows.value), repackPercent / 100);
+    }
+
     function alignFrames() {
       if (!state.source || !state.frames.length) analyze(true);
       if (!state.source || !state.frames.length) return;
+
+      const originalSource = state.source;
+      const originalFrames = state.frames;
+      const originalSelectedFrameIndex = state.selectedFrameIndex;
+      const cols = Number(el.cols.value);
+      const rows = Number(el.rows.value);
+      const repackPercent = Math.max(1, Math.min(100, Number(el.repackScale.value) || 100));
+      const repackRatio = repackPercent / 100;
+      const usingRepack = repackRatio < 1;
+      if (usingRepack) {
+        state.source = repackSpritesheet(originalSource, cols, rows, repackRatio);
+        state.frames = [];
+        state.selectedFrameIndex = -1;
+        analyze(true);
+      }
 
       const refIndex = Math.max(0, Math.min(state.frames.length - 1, Number(el.reference.value) - 1));
       const pad = Number(el.padding.value);
       const bleed = Number(el.bleed.value);
       const frameW = Math.max(...state.frames.map(frame => frame.rect.w));
       const frameH = Math.max(...state.frames.map(frame => frame.rect.h));
-      const cols = Number(el.cols.value);
-      const rows = Number(el.rows.value);
       const refCol = refIndex % cols;
       const sharedImpact = el.sharedImpact.checked;
       const targetAnchor = {
         x: frameW / 2,
         y: frameH / 2,
       };
+      for (const frame of state.frames) applyManualFrameEdit(frame);
       const shifts = state.frames.map(frame => {
         const row = Math.floor(frame.index / cols);
         const rowRefIndex = el.rowAlign.checked ? Math.min(row * cols + refCol, state.frames.length - 1) : refIndex;
@@ -692,18 +1371,31 @@
       let outFrameH = frameH;
       let offsetX = 0;
       let offsetY = 0;
-      const useExpandedOutput = el.expandOutput.checked || bleed > 0;
+      const hasCustomSources = state.frames.some(frame => hasCustomSource(frame));
+      const useExpandedOutput = el.expandOutput.checked || bleed > 0 || hasCustomSources;
       if (useExpandedOutput) {
-        const minDx = Math.min(...shifts.map(s => s.dx));
-        const maxDx = Math.max(...shifts.map(s => s.dx));
-        const minDy = Math.min(...shifts.map(s => s.dy));
-        const maxDy = Math.max(...shifts.map(s => s.dy));
-        offsetX = Math.max(0, -minDx) + pad;
-        offsetY = Math.max(0, -minDy) + pad;
-        outFrameW = frameW + Math.max(0, maxDx) + Math.max(0, -minDx) + pad * 2 + bleed * 2;
-        outFrameH = frameH + Math.max(0, maxDy) + Math.max(0, -minDy) + pad * 2 + bleed * 2;
-        offsetX += bleed;
-        offsetY += bleed;
+        const lefts = [];
+        const rights = [];
+        const tops = [];
+        const bottoms = [];
+        for (const frame of state.frames) {
+          const shift = shifts[frame.index];
+          const copyRect = getFrameCopyRect(frame, true);
+          const left = shift.dx + (copyRect.x - frame.rect.x);
+          const top = shift.dy + (copyRect.y - frame.rect.y);
+          lefts.push(left);
+          rights.push(left + copyRect.w);
+          tops.push(top);
+          bottoms.push(top + copyRect.h);
+        }
+        const minLeft = Math.min(0, ...lefts);
+        const maxRight = Math.max(frameW, ...rights);
+        const minTop = Math.min(0, ...tops);
+        const maxBottom = Math.max(frameH, ...bottoms);
+        offsetX = -minLeft + pad;
+        offsetY = -minTop + pad;
+        outFrameW = maxRight - minLeft + pad * 2;
+        outFrameH = maxBottom - minTop + pad * 2;
       }
 
       const aligned = new ImageData(outFrameW * cols, outFrameH * rows);
@@ -711,20 +1403,27 @@
         const shift = shifts[frame.index];
         const col = frame.index % cols;
         const row = Math.floor(frame.index / cols);
-        const copyRect = useExpandedOutput ? frame.sampleRect : frame.rect;
+        const copyRect = getFrameCopyRect(frame, useExpandedOutput);
         const baseX = col * outFrameW + Math.floor((frameW - frame.rect.w) / 2);
         const baseY = row * outFrameH + Math.floor((frameH - frame.rect.h) / 2);
         const dstBaseX = baseX + offsetX + shift.dx + (copyRect.x - frame.rect.x);
         const dstBaseY = baseY + offsetY + shift.dy + (copyRect.y - frame.rect.y);
-        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY, useExpandedOutput ? frame.mask : null, frame.sampleRect);
+        const outputMask = frame.manualMask ? getOutputMask(frame) : (useExpandedOutput ? frame.mask : null);
+        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY, outputMask, frame.sampleRect);
       }
 
       state.aligned = aligned;
       state.shifts = shifts;
+      if (usingRepack) {
+        state.source = originalSource;
+        state.frames = originalFrames;
+        state.selectedFrameIndex = originalSelectedFrameIndex;
+      }
       const alignLabel = sharedImpact
         ? '共享命中點'
         : (el.rowAlign.checked ? '逐列對齊' : `基準格：${refIndex + 1}`);
-      setStatus(`已對齊 ${state.frames.length} 格。${alignLabel}，輸出格：${outFrameW}x${outFrameH}`);
+      const repackLabel = usingRepack ? `，縮放留白 ${repackPercent}%` : '';
+      setStatus(`已對齊 ${aligned ? cols * rows : state.frames.length} 格。${alignLabel}${repackLabel}，輸出格：${outFrameW}x${outFrameH}`);
       render();
     }
 
@@ -748,6 +1447,35 @@
           target.data[dst + 3] = source.data[src + 3];
         }
       }
+    }
+
+    function hasCustomSource(frame) {
+      return !!frame.sourceRect && (
+        frame.sourceRect.x !== frame.rect.x ||
+        frame.sourceRect.y !== frame.rect.y ||
+        frame.sourceRect.w !== frame.rect.w ||
+        frame.sourceRect.h !== frame.rect.h
+      );
+    }
+
+    function getFrameCopyRect(frame, useExpandedOutput) {
+      if (hasCustomSource(frame)) return frame.sourceRect;
+      return useExpandedOutput ? frame.sampleRect : frame.rect;
+    }
+
+    function getOutputMask(frame) {
+      if (!frame.manualMask) return frame.mask;
+      const maskRect = frame.sampleRect || frame.rect;
+      const mask = new Uint8Array(maskRect.w * maskRect.h);
+      for (let y = 0; y < maskRect.h; y++) {
+        for (let x = 0; x < maskRect.w; x++) {
+          const px = maskRect.x + x;
+          const py = maskRect.y + y;
+          if (!manualMaskContains(frame, px, py)) continue;
+          mask[y * maskRect.w + x] = 1;
+        }
+      }
+      return mask;
     }
 
     function togglePlay() {
@@ -786,11 +1514,14 @@
     }
 
     function render() {
+      const repackPreview = state.aligned ? null : getRepackPreview();
       drawSheet(el.sourceCanvas, state.source, state.frames);
-      drawSheet(el.alignedCanvas, state.aligned, []);
+      drawSheet(el.alignedCanvas, state.aligned || repackPreview, []);
       drawPlayer();
       el.sourceInfo.textContent = state.source ? `${state.source.width}x${state.source.height}` : '';
-      el.alignedInfo.textContent = state.aligned ? `${state.aligned.width}x${state.aligned.height}` : '';
+      el.alignedInfo.textContent = state.aligned
+        ? `${state.aligned.width}x${state.aligned.height}`
+        : (repackPreview ? `${repackPreview.width}x${repackPreview.height} 預覽` : '');
     }
 
     function drawSheet(canvas, imageData, frames) {
@@ -850,22 +1581,98 @@
         const b = frame.bounds;
         const ax = baseX + (r.x + frame.anchor.x) * scale;
         const ay = baseY + (r.y + frame.anchor.y) * scale;
-        if (s !== r) {
+        const editingSource = el.editSource.checked;
+        if (!editingSource && s !== r) {
           ctx.strokeStyle = 'rgba(255,255,255,.22)';
           ctx.setLineDash([5, 4]);
           ctx.strokeRect(baseX + s.x * scale, baseY + s.y * scale, s.w * scale, s.h * scale);
           ctx.setLineDash([]);
         }
-        ctx.strokeStyle = 'rgba(215,168,62,.45)';
-        ctx.strokeRect(baseX + r.x * scale, baseY + r.y * scale, r.w * scale, r.h * scale);
-        if (!b.empty) {
+        if (!editingSource) {
+          ctx.strokeStyle = 'rgba(215,168,62,.45)';
+          ctx.strokeRect(baseX + r.x * scale, baseY + r.y * scale, r.w * scale, r.h * scale);
+        }
+        if (frame.sourceRect) {
+          const sr = frame.sourceRect;
+          const selected = frame.index === state.selectedFrameIndex;
+          ctx.strokeStyle = selected ? 'rgba(92,190,255,.98)' : 'rgba(92,190,255,.62)';
+          ctx.lineWidth = selected ? 2 : 1;
+          ctx.strokeRect(baseX + sr.x * scale, baseY + sr.y * scale, sr.w * scale, sr.h * scale);
+          if (selected && el.editSource.checked) {
+            ctx.fillStyle = 'rgba(92,190,255,.95)';
+            const handles = [
+              [sr.x, sr.y], [sr.x + sr.w / 2, sr.y], [sr.x + sr.w, sr.y],
+              [sr.x, sr.y + sr.h / 2], [sr.x + sr.w, sr.y + sr.h / 2],
+              [sr.x, sr.y + sr.h], [sr.x + sr.w / 2, sr.y + sr.h], [sr.x + sr.w, sr.y + sr.h],
+            ];
+            for (const [hx, hy] of handles) {
+              ctx.fillRect(baseX + hx * scale - 3, baseY + hy * scale - 3, 6, 6);
+            }
+          }
+          ctx.lineWidth = 1;
+        }
+        if (!editingSource && !b.empty) {
           ctx.strokeStyle = 'rgba(120,224,189,.85)';
           ctx.strokeRect(baseX + (r.x + b.minX) * scale, baseY + (r.y + b.minY) * scale, (b.maxX - b.minX + 1) * scale, (b.maxY - b.minY + 1) * scale);
         }
+        if (!editingSource && frame.orientedBox?.points?.length === 4) {
+          const points = frame.orientedBox.points;
+          ctx.strokeStyle = 'rgba(199,120,255,.95)';
+          ctx.setLineDash([6, 3]);
+          ctx.beginPath();
+          ctx.moveTo(baseX + (r.x + points[0].x) * scale, baseY + (r.y + points[0].y) * scale);
+          for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(baseX + (r.x + points[i].x) * scale, baseY + (r.y + points[i].y) * scale);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        if (!editingSource && frame.manualMask) {
+          const maskRect = manualMaskRect(frame);
+          const cellW = maskRect.w / frame.manualMask.cols;
+          const cellH = maskRect.h / frame.manualMask.rows;
+          ctx.fillStyle = frame.index === state.selectedFrameIndex ? 'rgba(255,210,84,.24)' : 'rgba(120,224,189,.14)';
+          ctx.strokeStyle = frame.index === state.selectedFrameIndex ? 'rgba(255,210,84,.42)' : 'rgba(120,224,189,.22)';
+          ctx.lineWidth = 0.75;
+          for (let cy = 0; cy < frame.manualMask.rows; cy++) {
+            for (let cx = 0; cx < frame.manualMask.cols; cx++) {
+              if (!frame.manualMask.cells[cy * frame.manualMask.cols + cx]) continue;
+              const x = baseX + (maskRect.x + cx * cellW) * scale;
+              const y = baseY + (maskRect.y + cy * cellH) * scale;
+              const w = cellW * scale;
+              const h = cellH * scale;
+              ctx.fillRect(x, y, w, h);
+              if (frame.index === state.selectedFrameIndex) ctx.strokeRect(x, y, w, h);
+            }
+          }
+          if (frame.index === state.selectedFrameIndex) {
+            ctx.strokeStyle = 'rgba(255,210,84,.62)';
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(baseX + maskRect.x * scale, baseY + maskRect.y * scale, maskRect.w * scale, maskRect.h * scale);
+            ctx.setLineDash([]);
+          }
+        }
+        if (!editingSource && frame.index === state.selectedFrameIndex) {
+          ctx.strokeStyle = 'rgba(255,210,84,.95)';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(baseX + r.x * scale, baseY + r.y * scale, r.w * scale, r.h * scale);
+          ctx.lineWidth = 1;
+        }
         ctx.fillStyle = '#ff5d6c';
-        ctx.beginPath();
-        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
-        ctx.fill();
+        if (!editingSource) {
+          ctx.beginPath();
+          ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (!editingSource && frame.manualAnchor) {
+          ctx.strokeStyle = '#fff2d8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(baseX + (r.x + frame.manualAnchor.x) * scale, baseY + (r.y + frame.manualAnchor.y) * scale, 7, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.lineWidth = 1;
+        }
       }
       ctx.restore();
     }
