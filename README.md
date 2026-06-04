@@ -6,11 +6,11 @@
 
 https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
 
-A browser-based tool for fixing misaligned AI-generated sprite sheets.
+A browser-based tool for cleaning up AI-generated sprite sheets and making their animation frames more stable for games.
 
-AI-generated sprite sheets often look good as still images, but each frame may have a different subject position. When imported into a game, the animation can jitter, shake, or appear unstable.
+AI-generated sprite sheets often look good as still images, but the frames may not line up when played in sequence. Effects can cross the original grid, tails can be clipped, and multi-row animations can jump when the playback moves from one row to the next.
 
-This tool helps align each frame to a consistent anchor point, making AI-generated 2D animation assets more usable in game projects.
+This tool helps you define where each frame should be sampled from, align frames to a consistent anchor point, preview the animation, and export a corrected PNG.
 
 ---
 
@@ -30,6 +30,8 @@ After using this tool, the frames are aligned to a consistent anchor point, maki
 
 ![Sprite sheet comparison](demo/sprite-before-after.png)
 
+---
+
 ## What is a Sprite Sheet?
 
 A **sprite** is a 2D image used in games, such as a character, enemy, item, effect, or UI icon.
@@ -47,34 +49,39 @@ Example:
 
 ## Why This Tool Exists
 
-AI image generators can create impressive animation sheets, but they often have alignment problems:
+AI image generators can create impressive animation sheets, but they often have practical game-asset problems:
 
-* The character shifts left or right between frames
-* The feet or bottom position does not stay stable
-* Attack effects extend outside the original frame
-* The animation looks shaky when previewed in a game
+* The subject shifts between frames
+* The feet or ground contact point does not stay stable
+* Slash, impact, or explosion effects extend outside the original grid
+* The tail of one frame overlaps the beginning of another frame
+* Multi-row animations jump when playback moves from one row to the next
+* The animation looks shaky when imported into a game
 
-This tool analyzes each frame, detects the visible subject area, and realigns the frames based on a selected anchor mode.
+This tool treats the original grid as a starting point, not as an unchangeable boundary. You can manually adjust each frame's source rectangle, then let the tool align the resulting frames.
 
 ---
 
-## Features
+## Key Features
 
 * Drag and drop PNG / JPG / WebP sprite sheets
 * Set custom columns and rows
-* Automatically slice the sprite sheet into frames
-* Detect subject bounds using transparency / alpha data
-* Alignment modes:
-
+* Automatic frame analysis using transparency / alpha data
+* Source rectangle editing for individual frames
+* Drag a source rectangle to include clipped tails or avoid neighboring frames
+* Reset a selected source rectangle back to the original grid cell
+* Anchor modes:
   * Subject center
   * Bottom center
   * Visual center of mass
-* Choose a reference frame
-* Optional overflow sampling margin for effects that cross frame borders
-* Subject mask mode that keeps the main body of each frame and avoids copying fragments from neighboring frames
+* Reference frame alignment
 * Row-by-row alignment mode
 * Shared impact point mode for multi-row slash / impact / explosion sheets
-* Optional output frame expansion to prevent effects from being clipped
+* Overflow sampling margin for effects that cross frame borders
+* Automatic output frame expansion to prevent clipping
+* Cleaner source-rectangle editing view that hides distracting guide boxes
+* Hover tooltips for important controls
+* Dark dropdown styling for better readability
 * Animation preview
 * Export the corrected sprite sheet as PNG
 * Runs locally in the browser
@@ -82,35 +89,123 @@ This tool analyzes each frame, detects the visible subject area, and realigns th
 
 ---
 
-## How to Use
+## Main Workflow
 
 1. Open `index.html` in your browser.
 2. Drop a sprite sheet image into the tool, or click the open file button.
-3. Set the number of columns and rows.
-4. Choose a reference frame.
-5. Click the analyze button to inspect detected bounds and anchor points.
-6. Choose an alignment mode.
-7. Click auto-align.
-8. Preview the animation.
-9. Export the corrected PNG.
+3. Set the correct column and row count, such as `4x2` or `8x1`.
+4. Choose an anchor mode.
+5. If a frame is clipped or overlaps with another frame, enable **Edit Source Rect**.
+6. Click the frame you want to adjust.
+7. Drag inside the blue source rectangle to move it.
+8. Drag an edge or corner to resize it.
+9. Click **Auto Align**.
+10. Preview the animation.
+11. Export the corrected PNG.
 
 ---
 
-## Recommended Workflow
+## Source Rectangle Editing
 
-For AI-generated animation sheets:
+The source rectangle is the area sampled from the original image for a frame.
 
-1. Generate the sprite sheet with a transparent background if possible.
-2. Open it in this tool.
-3. Set the correct column and row count, such as `4x2` or `8x1`.
-4. Start with **Bottom Center** alignment for characters.
-5. Keep **Row-by-row alignment** enabled when the sheet has multiple rows.
-6. Enable **Shared Impact Point** when different rows are phases of the same attack, such as slash frames followed by an explosion row.
-7. Keep **Subject mask** enabled when using overflow sampling, so neighboring frame fragments are not copied into the current frame.
-8. If an effect is clipped by the original grid, increase the overflow sampling margin. A useful starting range is `40` to `70`.
-9. Keep output frame expansion enabled when using overflow sampling.
-10. Preview the animation before exporting.
-11. Import the corrected sheet into your game project.
+By default, each source rectangle starts as the original grid cell. If a frame's visual tail extends outside that grid cell, enable **Edit Source Rect** and resize the blue rectangle to include it.
+
+When editing source rectangles:
+
+* The tool hides most other guide boxes so the blue source rectangles are easier to read.
+* Clicking inside an original grid cell prioritizes that grid cell.
+* Dragging a selected source rectangle edge keeps editing that selected frame, even if the mouse slightly crosses into a neighboring cell.
+* **Reset Source Rect** restores the selected frame to the original grid cell.
+
+This is the recommended fix for AI sheets where frame tails and neighboring frame starts overlap.
+
+---
+
+## Alignment Options
+
+### Anchor Mode
+
+Choose which point should be aligned across frames.
+
+* **Bottom Center**: good for grounded characters, impact effects, and explosions.
+* **Subject Center**: good for slash effects, projectiles, or floating effects.
+* **Visual Center of Mass**: useful when the visible alpha distribution is more stable than the bounding box.
+
+### Row-by-row Alignment
+
+When enabled, each row uses the same column in that row as its reference.
+
+For a `4x2` sheet with reference frame 1:
+
+```text
+Row 1 uses frame 1 as reference.
+Row 2 uses frame 5 as reference.
+```
+
+This is useful when rows are separate animation phases.
+
+If the rows are part of one continuous animation, row-by-row alignment may cause a jump between rows. In that case, try disabling it.
+
+### Shared Impact Point
+
+Shared impact point aligns all frames toward one common hit point.
+
+Use it when a multi-row sheet is one continuous effect, such as:
+
+```text
+slash frames -> impact frames -> explosion frames
+```
+
+For many AI-generated attack effects, a good starting point is:
+
+```text
+Shared Impact Point: ON
+Row-by-row Alignment: OFF
+Anchor Mode: Bottom Center or Subject Center
+```
+
+---
+
+## Recommended Settings
+
+For character or grounded effects:
+
+```text
+Anchor Mode: Bottom Center
+Row-by-row Alignment: ON if rows are separate, OFF if rows are continuous
+Shared Impact Point: OFF unless rows should connect at one hit point
+```
+
+For slash / impact / explosion sheets:
+
+```text
+Anchor Mode: Subject Center or Bottom Center
+Shared Impact Point: ON
+Row-by-row Alignment: usually OFF if the rows are one continuous animation
+Edit Source Rect: use when a tail is clipped or overlaps another frame
+```
+
+For effects crossing the original grid:
+
+```text
+Increase Overflow Sampling Margin
+Use Edit Source Rect for the specific problem frames
+Keep output frame expansion enabled
+```
+
+---
+
+## Visual Guide
+
+* Blue rectangle: source rectangle used for that frame
+* Blue handles: drag points for the selected source rectangle
+* Gold frame: original grid cell
+* White dashed frame: overflow sampling area
+* Green frame: detected subject bounds
+* Red dot: current alignment anchor
+
+When **Edit Source Rect** is enabled, the tool hides most guide boxes and focuses on the blue source rectangles.
 
 ---
 
@@ -118,15 +213,7 @@ For AI-generated animation sheets:
 
 This tool works best with transparent PNG sprite sheets.
 
-If the image has a solid black, white, or colored background, the alpha-based detection may not correctly detect the real subject. In that case, removing the background first will improve the result.
-
-Visual guide:
-
-* Gold frame: original fixed frame area
-* White dashed frame: overflow sampling area
-* Green frame: detected subject bounds
-* Red dot: current alignment anchor
-* Shared Impact Point: places every detected anchor on the same output-frame center, so different rows can connect at one hit point
+If the image has a solid black, white, or colored background, alpha-based detection may not correctly detect the real subject. Removing the background first will improve the result.
 
 When output frame expansion is enabled, the exported sprite sheet may become larger than the original image. This does not mean the sprite itself was scaled down. The tool adds transparent safety space around each frame so effects are not clipped.
 
@@ -140,7 +227,7 @@ When importing the exported sheet into a game, use the new exported frame size i
 * RPG battle sprites
 * Enemy animation sheets
 * Skill effect sprite sheets
-* Pixel-art style animation cleanup
+* Slash / impact / explosion animation cleanup
 * 2D game asset preparation
 * Game jam asset correction
 
@@ -162,23 +249,17 @@ run.bat
 
 ---
 
-## 中文說明：AI 動畫圖格對齊工具
+# 中文說明：AI 動畫圖格對齊工具
 
 ## 線上工具
 
 https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
 
-這是一個本地瀏覽器工具，用來修正 AI 生成 spritesheet 時，每一格主體位置不一致的問題。
+這是一個本地瀏覽器工具，用來整理 AI 生成的 spritesheet，讓動畫播放時更穩、更適合放進遊戲。
 
-AI 很容易生成漂亮的動畫圖，但常見問題是：
+AI 生成的動畫圖常常單張看起來很漂亮，但實際播放時會出現問題：每格位置不一致、上下排接續會跳、斬擊尾韻被格線切掉，或某一格的尾巴跟隔壁格的開端黏在一起。
 
-* 每一格角色位置不同
-* 播放起來會抖動
-* 腳底基準線不穩
-* 攻擊特效超出原本格子
-* 放進遊戲後動畫看起來會飄
-
-這個工具會自動分析每格主體位置，並依照指定的錨點重新對齊，讓 AI 生成的動畫素材更接近遊戲可用狀態。
+這個工具會把原本的平均格線當作初始參考，而不是死板邊界。你可以針對每一格手動調整「來源框」，再讓工具依照錨點自動對齊並匯出新的 PNG。
 
 ---
 
@@ -198,26 +279,13 @@ AI 很容易生成漂亮的動畫圖，但常見問題是：
 
 ![Spritesheet 對比圖](demo/sprite-before-after.png)
 
-## 什麼是精靈圖 / Sprite？
-
-在遊戲開發裡，**Sprite** 指的是遊戲中可以獨立顯示、移動或播放動畫的 2D 圖像，例如：
-
-* 角色
-* 敵人
-* 道具
-* 攻擊特效
-* 火球、斬擊、爆炸
-* UI 圖示
-
-中文常翻成「精靈圖」，但它不是指妖精，而是遊戲用的 2D 圖像物件。
-
 ---
 
-## 什麼是 Spritesheet？
+## 什麼是 Sprite / Spritesheet？
 
-**Spritesheet** 是把多張動畫格集中在同一張圖片裡。
+**Sprite** 是遊戲中使用的 2D 圖像，例如角色、敵人、道具、攻擊特效、火球、斬擊、爆炸或 UI 圖示。
 
-遊戲會依序切出每一格播放，形成動畫。
+**Spritesheet** 是把多張動畫格集中在同一張圖片裡。遊戲會依序切出每一格播放，形成動畫。
 
 例如：
 
@@ -226,80 +294,192 @@ AI 很容易生成漂亮的動畫圖，但常見問題是：
 [第5格][第6格][第7格][第8格]
 ```
 
-如果每一格主體沒有對齊，播放時角色就會抖動或亂飄。
+如果每一格主體或特效中心沒有對齊，播放時就會抖動或亂飄。
+
+---
+
+## 為什麼需要這個工具？
+
+AI 生成的 spritesheet 常見問題：
+
+* 每一格角色或特效位置不同
+* 播放起來會抖動
+* 腳底或命中點不穩
+* 斬擊、爆炸、光效超出原本格子
+* 某一格尾韻跟隔壁格開端黏在一起
+* 上排播放到下排時會跳一下
+
+這個工具的重點不是只靠自動猜測，而是讓你可以定義「這一格應該從原圖哪個範圍取」。來源框調整好後，再進行對齊與輸出。
 
 ---
 
 ## 功能
 
 * 支援拖放 PNG / JPG / WebP spritesheet
-* 可設定欄列數，例如 4x2、8x1
+* 可設定欄列數，例如 `4x2`、`8x1`
 * 自動切格並偵測每格主體範圍
-* 可選擇基準格
+* 可針對單格編輯來源框
+* 可拖曳來源框，把框外尾韻納入，或避開隔壁格
+* 可重設選中格的來源框
 * 支援多種對齊方式：
-
   * 主體中心
   * 底部中心
   * 視覺重心
-* 支援外溢取樣邊距，處理特效被格線切到的情況
-* 支援主體遮罩，避免外溢取樣時把隔壁格的碎片一起撈進來
-* 支援逐列對齊，避免上下排不同動作互相拉歪
-* 支援共享命中點，讓斬擊與爆炸等跨列接續特效對準同一個命中中心
+* 可選擇基準格
+* 支援逐列對齊
+* 支援共享命中點，適合跨列接續的斬擊、命中、爆炸動畫
+* 支援取樣外溢邊距
 * 支援自動擴大輸出格子，避免特效被裁切
+* 編輯來源框時會簡化畫面，只保留關鍵來源框
+* 重要控制項有滑鼠提示說明
+* 下拉選單改為深色樣式，避免看不清楚
 * 可即時播放預覽動畫
 * 可匯出修正後 PNG
 * 完全本地運作，不需要安裝
 
 ---
 
-## 使用方式
+## 基本使用方式
 
 1. 打開 `index.html`。
 2. 將 spritesheet 拖進工具，或按開啟圖檔。
 3. 設定欄數與列數。
-4. 選擇基準格。
-5. 按分析格子，查看主體偵測框與錨點。
-6. 選擇對齊方式，角色動畫通常建議先用「底部中心」。
-7. 若特效有被格線切到，調整「取樣外溢邊距」。
-8. 建議保持「逐列對齊」、「自動擴大格子避免裁切」、「只保留每格主體」開啟。
-9. 按自動對齊。
+4. 選擇對齊方式。
+5. 如果某一格被切到或吃到隔壁，開啟 **編輯來源框**。
+6. 點選要修正的格子。
+7. 拖曳藍色來源框內部可以移動來源框。
+8. 拖曳藍色來源框的邊或角可以縮放來源框。
+9. 按 **自動對齊**。
 10. 播放預覽，確認動畫是否穩定。
 11. 匯出修正後 PNG。
 
 ---
 
-## 建議
+## 來源框編輯
+
+來源框代表「這一格要從原圖哪個範圍取圖」。
+
+預設每一格來源框等於平均格線。如果某一格的尾韻超出格線，開啟 **編輯來源框**，把藍色來源框拉大或移動，讓它包含正確內容。
+
+編輯來源框時：
+
+* 畫面會隱藏多數偵測框，避免干擾。
+* 點在原始平均格內時，會優先選該格。
+* 如果正在拉目前選中來源框的邊或角，即使滑鼠稍微跨到隔壁格，也會繼續拉目前選中的框。
+* **重設來源框** 可以把目前選中的格子恢復成原始平均格線。
+
+這是處理「尾韻被切掉」或「相鄰格互相黏住」最推薦的方式。
+
+---
+
+## 對齊選項說明
+
+### 對齊方式 / 錨點
+
+選擇每一格要用哪個點來對齊。
+
+* **底部中心**：適合角色、落地爆炸、地面特效。
+* **主體中心**：適合斬擊、飛行物、光球或中心穩定的特效。
+* **視覺重心**：適合形狀不規則，但透明像素分布穩定的特效。
+
+### 逐列對齊
+
+開啟後，每一列會使用該列同欄的格子當基準。
+
+例如 `4x2` 並且基準格是第 1 格：
+
+```text
+第 1 列用第 1 格當基準
+第 2 列用第 5 格當基準
+```
+
+如果上下排是不同動作段落，逐列對齊會有幫助。
+
+如果上下排其實是同一段動畫的連續播放，逐列對齊可能會讓跨列接續時跳一下。這種情況可以關掉。
+
+### 共享命中點
+
+共享命中點會把所有格子對到同一個命中中心。
+
+適合這類 spritesheet：
+
+```text
+斬擊 -> 命中 -> 爆炸
+```
+
+如果一段動畫被排成上下兩列，通常可以先試：
+
+```text
+共享命中點：開啟
+逐列對齊：關閉
+對齊方式：底部中心 或 主體中心
+```
+
+---
+
+## 建議設定
+
+角色或地面特效：
+
+```text
+對齊方式：底部中心
+逐列對齊：上下排是不同段落時開啟；同一段動畫接續時關閉
+共享命中點：通常關閉，除非每格都要對到同一命中點
+```
+
+斬擊、命中、爆炸類特效：
+
+```text
+對齊方式：主體中心 或 底部中心
+共享命中點：開啟
+逐列對齊：如果上下排是同一段動畫，通常關閉
+編輯來源框：用來修正被切掉的尾韻或重疊的格子
+```
+
+特效超出原本格線時：
+
+```text
+調整取樣外溢邊距
+針對問題格使用編輯來源框
+保持自動擴大輸出格子
+```
+
+---
+
+## 視覺標記
+
+* 藍色框：該格的來源框
+* 藍色控制點：目前選中來源框可拖曳的位置
+* 金色框：原始平均格線
+* 白色虛線框：外溢取樣範圍
+* 綠色框：偵測到的主體範圍
+* 紅點：目前對齊錨點
+
+開啟 **編輯來源框** 時，工具會簡化畫面，只保留來源框相關標記，方便調整。
+
+---
+
+## 注意事項
 
 透明背景 PNG 效果最好。
 
 如果圖片是黑底、白底或其他純色背景，建議先去背再使用，否則工具可能無法正確判斷主體範圍。
 
-角色動畫通常建議使用：
+開啟自動擴大輸出格子後，匯出的 spritesheet 尺寸可能會比原圖大。這不是把圖縮小，而是每一格周圍多了透明安全邊，避免特效被裁切。
 
-```text
-Bottom Center / 底部中心
-```
+放進遊戲時，要用匯出後的新格子尺寸切圖。如果畫面上看起來變小，可以在遊戲程式裡調整顯示尺寸。
 
-攻擊特效或漂浮物件可以嘗試：
+---
 
-```text
-Subject Center / 主體中心
-```
+## 適合用途
 
-如果是 `4x2`、`8x1` 這類 AI 生成的攻擊動畫，建議先從這組設定開始：
-
-```text
-對齊方式：底部中心
-逐列對齊：開啟
-共享命中點：如果上下排是同一招的斬擊 -> 爆炸接續，請開啟
-自動擴大格子避免裁切：開啟
-只保留每格主體：開啟
-取樣外溢邊距：40～70
-```
-
-注意：開啟「自動擴大格子避免裁切」後，匯出的 spritesheet 尺寸可能會比原圖大。這不是把圖縮小，而是每一格周圍多了透明安全邊，避免特效被切掉。
-
-放進遊戲時，要用匯出後的新格子尺寸切圖。如果畫面上看起來變小，可以在遊戲程式裡把顯示尺寸放大。
+* AI 生成角色攻擊動畫
+* RPG 戰鬥 sprites
+* 敵人動畫圖
+* 技能特效 spritesheet
+* 斬擊、命中、爆炸動畫整理
+* 2D 遊戲素材前處理
+* Game jam 素材修正
 
 ---
 

@@ -604,9 +604,26 @@
 
     function findSourceFrameAtPoint(x, y) {
       const selected = state.frames[state.selectedFrameIndex];
+      if (selected && sourceRectHandleContains(selected, x, y)) return selected;
+      const gridFrame = findFrameAtPoint(x, y);
+      if (gridFrame) return gridFrame;
       if (selected && rectContains(selected.sourceRect || selected.rect, x, y)) return selected;
       const custom = state.frames.find(frame => rectContains(frame.sourceRect || frame.rect, x, y));
-      return custom || findFrameAtPoint(x, y);
+      return custom || null;
+    }
+
+    function sourceRectHandleContains(frame, x, y) {
+      const rect = frame.sourceRect || frame.rect;
+      const handle = Math.max(8, Math.min(rect.w, rect.h) * 0.09);
+      const inOuterBand =
+        x >= rect.x - handle && x <= rect.x + rect.w + handle &&
+        y >= rect.y - handle && y <= rect.y + rect.h + handle;
+      if (!inOuterBand) return false;
+      const nearLeft = Math.abs(x - rect.x) <= handle;
+      const nearRight = Math.abs(x - (rect.x + rect.w)) <= handle;
+      const nearTop = Math.abs(y - rect.y) <= handle;
+      const nearBottom = Math.abs(y - (rect.y + rect.h)) <= handle;
+      return nearLeft || nearRight || nearTop || nearBottom;
     }
 
     function getSourceRectDragMode(frame, x, y) {
