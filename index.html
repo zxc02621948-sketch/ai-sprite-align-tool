@@ -252,6 +252,8 @@
           <br><br>
           <label><input id="row-align" type="checkbox" checked> 逐列對齊</label>
           <br><br>
+          <label><input id="shared-impact" type="checkbox"> 共享命中點（跨列接續）</label>
+          <br><br>
           <label><input id="expand-output" type="checkbox" checked> 自動擴大格子避免裁切</label>
           <br><br>
           <label><input id="subject-mask" type="checkbox" checked> 只保留每格主體，避免撈到隔壁</label>
@@ -262,8 +264,9 @@
             2. 設定欄、列，例如 4x2。<br>
             3. 若特效被格線切到，提高「取樣外溢邊距」。<br>
             4. 按「分析格子」看每格主體框。<br>
-            5. 按「自動對齊」。<br>
-            6. 播放確認不再亂飄後匯出。<br><br>
+            5. 若上下排是斬擊接爆炸，開「共享命中點」。<br>
+            6. 按「自動對齊」。<br>
+            7. 播放確認不再亂飄後匯出。<br><br>
             透明背景素材效果最好。暗底素材也能抓，但準度會比較差。
           </div>
         </div>
@@ -303,6 +306,7 @@
       fps: document.getElementById('fps'),
       showBoxes: document.getElementById('show-boxes'),
       rowAlign: document.getElementById('row-align'),
+      sharedImpact: document.getElementById('shared-impact'),
       expandOutput: document.getElementById('expand-output'),
       subjectMask: document.getElementById('subject-mask'),
       alphaLabel: document.getElementById('alpha-label'),
@@ -323,7 +327,7 @@
     document.getElementById('play-btn').addEventListener('click', togglePlay);
     document.getElementById('export-btn').addEventListener('click', exportPng);
 
-    for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.rowAlign, el.expandOutput, el.subjectMask]) {
+    for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask]) {
       input.addEventListener('change', () => {
         analyze(true);
         render();
@@ -663,10 +667,21 @@
       const cols = Number(el.cols.value);
       const rows = Number(el.rows.value);
       const refCol = refIndex % cols;
+      const sharedImpact = el.sharedImpact.checked;
+      const targetAnchor = {
+        x: frameW / 2,
+        y: frameH / 2,
+      };
       const shifts = state.frames.map(frame => {
         const row = Math.floor(frame.index / cols);
         const rowRefIndex = el.rowAlign.checked ? Math.min(row * cols + refCol, state.frames.length - 1) : refIndex;
         const ref = state.frames[rowRefIndex];
+        if (sharedImpact) {
+          return {
+            dx: Math.round(targetAnchor.x - frame.anchor.x),
+            dy: Math.round(targetAnchor.y - frame.anchor.y),
+          };
+        }
         return {
           dx: Math.round(ref.anchor.x - frame.anchor.x),
           dy: Math.round(ref.anchor.y - frame.anchor.y),
@@ -706,7 +721,10 @@
 
       state.aligned = aligned;
       state.shifts = shifts;
-      setStatus(`已對齊 ${state.frames.length} 格。${el.rowAlign.checked ? '逐列對齊' : `基準格：${refIndex + 1}`}，輸出格：${outFrameW}x${outFrameH}`);
+      const alignLabel = sharedImpact
+        ? '共享命中點'
+        : (el.rowAlign.checked ? '逐列對齊' : `基準格：${refIndex + 1}`);
+      setStatus(`已對齊 ${state.frames.length} 格。${alignLabel}，輸出格：${outFrameW}x${outFrameH}`);
       render();
     }
 

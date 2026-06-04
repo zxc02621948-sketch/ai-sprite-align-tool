@@ -73,6 +73,7 @@ This tool analyzes each frame, detects the visible subject area, and realigns th
 * Optional overflow sampling margin for effects that cross frame borders
 * Subject mask mode that keeps the main body of each frame and avoids copying fragments from neighboring frames
 * Row-by-row alignment mode
+* Shared impact point mode for multi-row slash / impact / explosion sheets
 * Optional output frame expansion to prevent effects from being clipped
 * Animation preview
 * Export the corrected sprite sheet as PNG
@@ -104,11 +105,12 @@ For AI-generated animation sheets:
 3. Set the correct column and row count, such as `4x2` or `8x1`.
 4. Start with **Bottom Center** alignment for characters.
 5. Keep **Row-by-row alignment** enabled when the sheet has multiple rows.
-6. Keep **Subject mask** enabled when using overflow sampling, so neighboring frame fragments are not copied into the current frame.
-7. If an effect is clipped by the original grid, increase the overflow sampling margin. A useful starting range is `40` to `70`.
-8. Keep output frame expansion enabled when using overflow sampling.
-9. Preview the animation before exporting.
-10. Import the corrected sheet into your game project.
+6. Enable **Shared Impact Point** when different rows are phases of the same attack, such as slash frames followed by an explosion row.
+7. Keep **Subject mask** enabled when using overflow sampling, so neighboring frame fragments are not copied into the current frame.
+8. If an effect is clipped by the original grid, increase the overflow sampling margin. A useful starting range is `40` to `70`.
+9. Keep output frame expansion enabled when using overflow sampling.
+10. Preview the animation before exporting.
+11. Import the corrected sheet into your game project.
 
 ---
 
@@ -124,6 +126,7 @@ Visual guide:
 * White dashed frame: overflow sampling area
 * Green frame: detected subject bounds
 * Red dot: current alignment anchor
+* Shared Impact Point: places every detected anchor on the same output-frame center, so different rows can connect at one hit point
 
 When output frame expansion is enabled, the exported sprite sheet may become larger than the original image. This does not mean the sprite itself was scaled down. The tool adds transparent safety space around each frame so effects are not clipped.
 
@@ -241,6 +244,7 @@ AI 很容易生成漂亮的動畫圖，但常見問題是：
 * 支援外溢取樣邊距，處理特效被格線切到的情況
 * 支援主體遮罩，避免外溢取樣時把隔壁格的碎片一起撈進來
 * 支援逐列對齊，避免上下排不同動作互相拉歪
+* 支援共享命中點，讓斬擊與爆炸等跨列接續特效對準同一個命中中心
 * 支援自動擴大輸出格子，避免特效被裁切
 * 可即時播放預覽動畫
 * 可匯出修正後 PNG
@@ -287,6 +291,7 @@ Subject Center / 主體中心
 ```text
 對齊方式：底部中心
 逐列對齊：開啟
+共享命中點：如果上下排是同一招的斬擊 -> 爆炸接續，請開啟
 自動擴大格子避免裁切：開啟
 只保留每格主體：開啟
 取樣外溢邊距：40～70
