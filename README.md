@@ -485,6 +485,12 @@ AI 生成的 spritesheet 常見問題：
 
 ## License
 
-License not decided yet.
+Code is released under the MIT License. See [LICENSE](LICENSE).
 
-If this project is released as open source, MIT License is recommended.
+Demo images, GIFs, sprite sheets, and other visual assets in this repository are included for demonstration and documentation purposes only. They are not part of the MIT-licensed source code unless explicitly stated otherwise.
+
+## 授權
+
+本專案程式碼採用 MIT License 授權，詳見 [LICENSE](LICENSE)。
+
+倉庫中的示範圖片、GIF、spritesheet 與其他視覺素材僅供展示與文件說明使用，除非另有明確標示，否則不包含在 MIT 授權的程式碼範圍內。
