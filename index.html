@@ -126,6 +126,18 @@
 
     .file-btn input { display: none; }
 
+    .export-tools {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .export-tools button {
+      justify-content: center;
+      min-width: 0;
+    }
+
     .main {
       min-height: 0;
       display: grid;
@@ -347,6 +359,11 @@
               <option value="75">75%</option>
             </select>
           </label>
+          <div class="export-tools">
+            <button id="export-bundle-btn" type="button" title="匯出目前對齊結果的 PNG，並另外下載一份格子資料 JSON。">匯出 PNG + 資料</button>
+            <button id="copy-godot-btn" type="button" title="複製 Godot 匯入時需要填的欄列與單格尺寸。">複製 Godot 設定</button>
+            <button id="copy-unity-btn" type="button" title="複製 Unity 匯入時需要填的欄列與單格尺寸。">複製 Unity 設定</button>
+          </div>
           <div class="hint">
             <br>
             使用方式：<br>
@@ -373,6 +390,7 @@
       aligned: null,
       frames: [],
       shifts: [],
+      outputLayout: null,
       selectedFrameIndex: -1,
       sourceDrag: null,
       playing: false,
@@ -428,20 +446,25 @@
     document.getElementById('align-btn').addEventListener('click', alignFrames);
     document.getElementById('play-btn').addEventListener('click', togglePlay);
     document.getElementById('export-btn').addEventListener('click', exportPng);
+    document.getElementById('export-bundle-btn').addEventListener('click', exportPngAndJson);
+    document.getElementById('copy-godot-btn').addEventListener('click', () => copyEngineSettings('godot'));
+    document.getElementById('copy-unity-btn').addEventListener('click', () => copyEngineSettings('unity'));
 
     for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.detectShape, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask, el.editSource, el.editMask, el.maskEditMode]) {
       input.addEventListener('change', () => {
+        if (![el.bgMode, el.showBoxes, el.editSource, el.editMask].includes(input)) clearAlignedOutput();
         analyze(true);
         render();
       });
     }
     el.repackScale.addEventListener('change', () => {
-      state.aligned = null;
+      clearAlignedOutput();
       analyze(true);
       render();
     });
     el.maskGridSize.addEventListener('change', () => {
       for (const frame of state.frames) frame.manualMask = null;
+      clearAlignedOutput();
       render();
     });
     el.sourceCanvas.addEventListener('click', handleSourceCanvasClick);
@@ -460,7 +483,7 @@
         ? frame.rect
         : expandRect(frame.rect, Number(el.bleed.value), state.source.width, state.source.height);
       frame.copyRect = frame.sourceRect || frame.rect;
-      state.aligned = null;
+      clearAlignedOutput();
       analyze(true);
       setStatus(`已重設第 ${frame.index + 1} 格來源框。`);
       render();
@@ -468,7 +491,10 @@
     for (const [input, label] of [[el.alpha, el.alphaLabel], [el.padding, el.paddingLabel], [el.bleed, el.bleedLabel], [el.fps, el.fpsLabel]]) {
       input.addEventListener('input', () => {
         label.textContent = input.value;
-        if (input !== el.fps) analyze(true);
+        if (input !== el.fps) {
+          clearAlignedOutput();
+          analyze(true);
+        }
         render();
       });
     }
@@ -494,6 +520,11 @@
 
     function setStatus(text) {
       el.status.textContent = text;
+    }
+
+    function clearAlignedOutput() {
+      state.aligned = null;
+      state.outputLayout = null;
     }
 
     async function loadBridgeAssetFromQuery() {
@@ -565,7 +596,7 @@
     }
 
     function resetImageState() {
-      state.aligned = null;
+      clearAlignedOutput();
       state.frames = [];
       state.shifts = [];
       state.selectedFrameIndex = -1;
@@ -626,7 +657,7 @@
           y: Math.max(0, Math.min(frame.rect.h - 1, point.y - frame.rect.y)),
         };
         applyManualFrameEdit(frame);
-        state.aligned = null;
+        clearAlignedOutput();
         setStatus(`已設定第 ${frame.index + 1} 格手動錨點。`);
         render();
         return;
@@ -640,7 +671,7 @@
       const index = cell.y * frame.manualMask.cols + cell.x;
       frame.manualMask.cells[index] = forceRemove || event.altKey ? false : !frame.manualMask.cells[index];
       applyManualFrameEdit(frame);
-      state.aligned = null;
+      clearAlignedOutput();
       setStatus(`已修正第 ${frame.index + 1} 格遮罩。${frame.manualAffectsAnchor ? '會重算錨點。' : '只修畫面。'}`);
       render();
     }
@@ -661,7 +692,7 @@
         startY: point.y,
         original: { ...frame.sourceRect },
       };
-      state.aligned = null;
+      clearAlignedOutput();
       event.preventDefault();
       render();
     }
@@ -692,7 +723,7 @@
       if (!state.sourceDrag) return;
       const frame = state.frames[state.sourceDrag.frameIndex];
       state.sourceDrag = null;
-      state.aligned = null;
+      clearAlignedOutput();
       if (frame) setStatus(`已調整第 ${frame.index + 1} 格來源框。`);
       render();
     }
@@ -1410,7 +1441,7 @@
       canvas.height = source.height;
       const ctx = canvas.getContext('2d');
       const temp = imageDataToCanvas(source);
-      ctx.imageSmoothingEnabled = scale < 1;
+      ctx.imageSmoothingEnabled = scaleRatio < 1;
       if (ctx.imageSmoothingEnabled) ctx.imageSmoothingQuality = 'high';
       const bleed = Number(el.bleed.value) || 0;
       for (let row = 0; row < rows; row++) {
@@ -1527,6 +1558,7 @@
 
       state.aligned = aligned;
       state.shifts = shifts;
+      state.outputLayout = { frameW: outFrameW, frameH: outFrameH, offsetX, offsetY };
       if (usingRepack) {
         state.source = originalSource;
         state.frames = originalFrames;
@@ -1611,18 +1643,168 @@
     function exportPng() {
       const output = state.aligned || state.source;
       if (!output) return;
+      downloadPng(output, `${state.fileName}_aligned.png`, () => {
+        setStatus(`已匯出 ${state.fileName}_aligned.png`);
+      });
+    }
+
+    function exportPngAndJson() {
+      const output = getExportOutput();
+      if (!output) return;
+      downloadPng(output, `${state.fileName}_aligned.png`);
+      downloadText(JSON.stringify(buildSpritesheetInfo(output), null, 2), `${state.fileName}_aligned.json`, 'application/json');
+      setStatus('已匯出 PNG 與格子資料 JSON。');
+    }
+
+    function getExportOutput() {
+      if (!state.source) return null;
+      if (!state.aligned) alignFrames();
+      return state.aligned || state.source;
+    }
+
+    function downloadPng(imageData, fileName, onDone = null) {
       const canvas = document.createElement('canvas');
-      canvas.width = output.width;
-      canvas.height = output.height;
-      canvas.getContext('2d').putImageData(output, 0, 0);
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      canvas.getContext('2d').putImageData(imageData, 0, 0);
       canvas.toBlob(blob => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `${state.fileName}_aligned.png`;
+        link.download = fileName;
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 500);
-        setStatus(`已匯出 ${link.download}`);
+        if (onDone) onDone();
       }, 'image/png');
+    }
+
+    function downloadText(text, fileName, type = 'text/plain') {
+      const blob = new Blob([text], { type });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 500);
+    }
+
+    function buildSpritesheetInfo(output) {
+      const cols = Math.max(1, Number(el.cols.value) || 1);
+      const rows = Math.max(1, Number(el.rows.value) || 1);
+      const frameWidth = Math.floor(output.width / cols);
+      const frameHeight = Math.floor(output.height / rows);
+      const frameCount = cols * rows;
+      const frames = [];
+      for (let index = 0; index < frameCount; index++) {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        frames.push({
+          index,
+          name: `frame_${String(index + 1).padStart(3, '0')}`,
+          x: col * frameWidth,
+          y: row * frameHeight,
+          w: frameWidth,
+          h: frameHeight,
+          anchor: getFrameExportAnchor(index, frameWidth, frameHeight),
+        });
+      }
+      return {
+        image: `${state.fileName}_aligned.png`,
+        columns: cols,
+        rows,
+        frameCount,
+        frameWidth,
+        frameHeight,
+        fps: Number(el.fps.value) || 8,
+        outputWidth: output.width,
+        outputHeight: output.height,
+        frames,
+      };
+    }
+
+    function getFrameExportAnchor(index, frameWidth, frameHeight) {
+      const frame = state.frames[index];
+      if (!frame) return { x: Math.round(frameWidth / 2), y: Math.round(frameHeight / 2) };
+      const output = state.aligned || state.source;
+      const cols = Math.max(1, Number(el.cols.value) || 1);
+      const rows = Math.max(1, Number(el.rows.value) || 1);
+      const sourceFrameW = Math.max(...state.frames.map(item => item.rect.w));
+      const sourceFrameH = Math.max(...state.frames.map(item => item.rect.h));
+      const outputFrameW = Math.floor(output.width / cols);
+      const outputFrameH = Math.floor(output.height / rows);
+      const layout = state.outputLayout || {
+        frameW: outputFrameW,
+        frameH: outputFrameH,
+        offsetX: Math.round((outputFrameW - sourceFrameW) / 2),
+        offsetY: Math.round((outputFrameH - sourceFrameH) / 2),
+      };
+      const shift = state.shifts[index] || { dx: 0, dy: 0 };
+      return {
+        x: Math.round(layout.offsetX + shift.dx + frame.anchor.x),
+        y: Math.round(layout.offsetY + shift.dy + frame.anchor.y),
+      };
+    }
+
+    async function copyEngineSettings(engine) {
+      const output = getExportOutput();
+      if (!output) return;
+      const info = buildSpritesheetInfo(output);
+      const text = engine === 'godot'
+        ? buildGodotSettingsText(info)
+        : buildUnitySettingsText(info);
+      await copyText(text);
+      setStatus(`已複製 ${engine === 'godot' ? 'Godot' : 'Unity'} 匯入設定。`);
+    }
+
+    function buildGodotSettingsText(info) {
+      return [
+        'Godot 匯入設定',
+        `圖片：${info.image}`,
+        `切圖：${info.columns} 欄 x ${info.rows} 列，共 ${info.frameCount} 格`,
+        `單格尺寸：${info.frameWidth} x ${info.frameHeight}`,
+        `建議播放速度：${info.fps} FPS`,
+        '',
+        '用法：',
+        '1. 把 PNG 匯入專案。',
+        '2. 建立 AnimatedSprite2D / SpriteFrames。',
+        '3. 用水平格數與垂直格數切圖。',
+        '4. 若播放比例不對，用節點 Scale 調整大小。',
+      ].join('\n');
+    }
+
+    function buildUnitySettingsText(info) {
+      return [
+        'Unity 匯入設定',
+        `圖片：${info.image}`,
+        'Sprite Mode：Multiple',
+        `切圖：${info.columns} 欄 x ${info.rows} 列，共 ${info.frameCount} 格`,
+        `單格尺寸：${info.frameWidth} x ${info.frameHeight}`,
+        `建議播放速度：${info.fps} FPS`,
+        '',
+        '用法：',
+        '1. 把 PNG 匯入 Assets。',
+        '2. Texture Type 設為 Sprite (2D and UI)。',
+        '3. Sprite Editor 使用 Grid By Cell Size。',
+        '4. Cell Size 填入上面的單格尺寸。',
+        '5. 若播放比例不對，用 Transform Scale 調整大小。',
+      ].join('\n');
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return;
+        } catch (error) {
+          console.warn('Clipboard API failed, falling back to textarea copy.', error);
+        }
+      }
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
     }
 
     function render() {
