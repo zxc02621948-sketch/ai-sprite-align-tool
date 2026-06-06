@@ -371,6 +371,7 @@
       playing: false,
       playIndex: 0,
       playTimer: 0,
+      loadToken: 0,
     };
 
     const el = {
@@ -484,21 +485,34 @@
       el.status.textContent = text;
     }
 
+    function resetImageState() {
+      state.aligned = null;
+      state.frames = [];
+      state.shifts = [];
+      state.selectedFrameIndex = -1;
+      state.sourceDrag = null;
+      state.playIndex = 0;
+    }
+
     function loadFile(file) {
+      const token = ++state.loadToken;
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => {
         URL.revokeObjectURL(url);
+        if (token !== state.loadToken) return;
+        resetImageState();
         state.fileName = file.name.replace(/\.[^.]+$/, '') || 'spritesheet_aligned';
         state.source = imageToData(img);
-        state.aligned = null;
-        state.shifts = [];
         setStatus(`已載入 ${file.name}  ${img.naturalWidth}x${img.naturalHeight}`);
         analyze(true);
         render();
+        el.file.value = '';
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
+        if (token !== state.loadToken) return;
+        el.file.value = '';
         setStatus('圖片載入失敗。');
       };
       img.src = url;
