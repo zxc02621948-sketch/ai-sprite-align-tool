@@ -6,6 +6,8 @@
 
 https://zxc02621948-sketch.github.io/ai-sprite-align-tool/
 
+更新日誌： [CHANGELOG.md](CHANGELOG.md)
+
 這是一個本地瀏覽器工具，用來整理 AI 生成的 spritesheet，讓動畫播放時更穩、更適合放進遊戲。
 
 AI 生成的動畫圖常常單張看起來很漂亮，但實際播放時會出現問題：每格位置不一致、上下排接續會跳、斬擊尾韻被格線切掉，或某一格的尾巴跟隔壁格的開端黏在一起。
