@@ -138,6 +138,63 @@
       min-width: 0;
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, .62);
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-box {
+      width: min(720px, 100%);
+      max-height: min(82vh, 760px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      border: 1px solid rgba(215,168,62,.42);
+      background: #15120f;
+      box-shadow: 0 24px 80px rgba(0,0,0,.45);
+    }
+
+    .modal-head,
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid rgba(215,168,62,.25);
+    }
+
+    .modal-actions {
+      border-top: 1px solid rgba(215,168,62,.25);
+      border-bottom: 0;
+      justify-content: flex-end;
+    }
+
+    .modal-title {
+      color: #fff2d8;
+      font-weight: 900;
+    }
+
+    .modal-text {
+      width: 100%;
+      min-height: 320px;
+      resize: vertical;
+      border: 0;
+      padding: 14px;
+      color: var(--text);
+      background: #0b0a09;
+      font: 13px/1.55 Consolas, "Cascadia Mono", monospace;
+      outline: none;
+      white-space: pre;
+    }
+
     .main {
       min-height: 0;
       display: grid;
@@ -387,6 +444,19 @@
     <div class="status" id="status">請開啟 spritesheet，或直接把圖片拖進視窗。</div>
   </div>
 
+  <div class="modal" id="settings-modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <div class="modal-head">
+        <div class="modal-title" id="settings-modal-title">引擎設定內容</div>
+        <button id="settings-modal-close" type="button">關閉</button>
+      </div>
+      <textarea id="settings-modal-text" class="modal-text" spellcheck="false"></textarea>
+      <div class="modal-actions">
+        <button id="settings-modal-copy" type="button">複製內容</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const state = {
       fileName: 'spritesheet_aligned',
@@ -441,6 +511,11 @@
       sourceInfo: document.getElementById('source-info'),
       alignedInfo: document.getElementById('aligned-info'),
       frameInfo: document.getElementById('frame-info'),
+      settingsModal: document.getElementById('settings-modal'),
+      settingsModalTitle: document.getElementById('settings-modal-title'),
+      settingsModalText: document.getElementById('settings-modal-text'),
+      settingsModalClose: document.getElementById('settings-modal-close'),
+      settingsModalCopy: document.getElementById('settings-modal-copy'),
     };
 
     document.querySelector('.file-btn button').addEventListener('click', () => el.file.click());
@@ -457,6 +532,14 @@
     document.getElementById('godot-helper-btn').addEventListener('click', () => exportEngineHelper('godot'));
     document.getElementById('unity-helper-btn').addEventListener('click', () => exportEngineHelper('unity'));
     document.getElementById('send-bg-remover-btn').addEventListener('click', sendCurrentToBgRemover);
+    el.settingsModalClose.addEventListener('click', closeSettingsModal);
+    el.settingsModalCopy.addEventListener('click', copySettingsModalText);
+    el.settingsModal.addEventListener('click', event => {
+      if (event.target === el.settingsModal) closeSettingsModal();
+    });
+    window.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && el.settingsModal.classList.contains('open')) closeSettingsModal();
+    });
 
     for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.detectShape, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask, el.editSource, el.editMask, el.maskEditMode]) {
       input.addEventListener('change', () => {
@@ -1829,15 +1912,34 @@
       };
     }
 
-    async function copyEngineSettings(engine) {
+    function copyEngineSettings(engine) {
       const output = getExportOutput();
       if (!output) return;
       const info = buildSpritesheetInfo(output);
       const text = engine === 'godot'
         ? buildGodotSettingsText(info)
         : buildUnitySettingsText(info);
-      await copyText(text);
-      setStatus(`已複製 ${engine === 'godot' ? 'Godot' : 'Unity'} 匯入設定。`);
+      openSettingsModal(`${engine === 'godot' ? 'Godot' : 'Unity'} 設定內容`, text);
+    }
+
+    function openSettingsModal(title, text) {
+      el.settingsModalTitle.textContent = title;
+      el.settingsModalText.value = text;
+      el.settingsModal.classList.add('open');
+      el.settingsModal.setAttribute('aria-hidden', 'false');
+      el.settingsModalText.focus();
+      el.settingsModalText.select();
+      setStatus('已開啟設定內容，可視需要複製給 AI 或引擎導入流程。');
+    }
+
+    function closeSettingsModal() {
+      el.settingsModal.classList.remove('open');
+      el.settingsModal.setAttribute('aria-hidden', 'true');
+    }
+
+    async function copySettingsModalText() {
+      await copyText(el.settingsModalText.value);
+      setStatus('已複製設定內容。');
     }
 
     function exportEngineHelper(engine) {
