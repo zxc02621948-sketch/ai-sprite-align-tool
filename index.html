@@ -1014,7 +1014,7 @@
         const coreRatio = coreHits / area;
         const insideRatio = insideHits / area;
         const score = area * (1 + coreRatio * 7 + insideRatio * 0.75 - distX * 1.6 - distY * 0.25);
-        components.push({ area, pixels, score, cx, cy, minX, minY, maxX, maxY });
+        components.push({ area, pixels, score, cx, cy, minX, minY, maxX, maxY, coreRatio, insideRatio });
       }
 
       if (!components.length) {
@@ -1027,10 +1027,12 @@
       const weakThreshold = Math.max(1, Math.floor(threshold * 0.35));
       let head = 0;
       let tail = 0;
-      for (const index of main.pixels) {
-        if (mask[index]) continue;
-        mask[index] = 1;
-        queue[tail++] = index;
+      for (const component of relatedFrameComponents(components, main, rect)) {
+        for (const index of component.pixels) {
+          if (mask[index]) continue;
+          mask[index] = 1;
+          queue[tail++] = index;
+        }
       }
 
       while (head < tail) {
@@ -1056,6 +1058,29 @@
       }
 
       return { bounds: boundsFromMask(image, rect, sampleRect, mask), mask };
+    }
+
+    function relatedFrameComponents(components, main, rect) {
+      const minUsefulArea = Math.max(3, Math.floor(rect.w * rect.h * 0.00008));
+      const maxDistX = 0.58;
+      const maxDistY = 0.58;
+      return components.filter(component => {
+        if (component === main) return true;
+        if (component.area < minUsefulArea) return false;
+        if (component.insideRatio < 0.68) return false;
+        const centerInsideFrame =
+          component.cx >= rect.x && component.cx < rect.x + rect.w &&
+          component.cy >= rect.y && component.cy < rect.y + rect.h;
+        if (!centerInsideFrame) return false;
+
+        const distX = Math.abs(component.cx - main.cx) / Math.max(1, rect.w);
+        const distY = Math.abs(component.cy - main.cy) / Math.max(1, rect.h);
+        const nearMain = distX <= maxDistX && distY <= maxDistY;
+        const meaningfulSize = component.area >= main.area * 0.018;
+        const centralDetail = component.coreRatio >= 0.08 && component.area >= minUsefulArea;
+        const largeLoosePart = component.area >= main.area * 0.045;
+        return nearMain && (meaningfulSize || centralDetail || largeLoosePart);
+      });
     }
 
     function detectDiagonalShape(image, rect, sampleRect, threshold) {
