@@ -719,7 +719,7 @@
         URL.revokeObjectURL(url);
         if (token !== state.loadToken) return;
         resetImageState();
-        state.fileName = file.name.replace(/\.[^.]+$/, '') || 'spritesheet_aligned';
+        state.fileName = toSafeBaseName(file.name);
         state.source = imageToData(img);
         setStatus(`已載入 ${file.name}  ${img.naturalWidth}x${img.naturalHeight}`);
         analyze(true);
@@ -1775,16 +1775,17 @@
     function exportPng() {
       const output = state.aligned || state.source;
       if (!output) return;
-      downloadPng(output, `${state.fileName}_aligned.png`, () => {
-        setStatus(`已匯出 ${state.fileName}_aligned.png`);
+      const imageName = outputImageName();
+      downloadPng(output, imageName, () => {
+        setStatus(`已匯出 ${imageName}`);
       });
     }
 
     function exportPngAndJson() {
       const output = getExportOutput();
       if (!output) return;
-      downloadPng(output, `${state.fileName}_aligned.png`);
-      downloadText(JSON.stringify(buildSpritesheetInfo(output), null, 2), `${state.fileName}_aligned.json`, 'application/json');
+      downloadPng(output, outputImageName());
+      downloadText(JSON.stringify(buildSpritesheetInfo(output), null, 2), outputJsonName(), 'application/json');
       setStatus('已匯出 PNG 與格子資料 JSON。');
     }
 
@@ -1797,7 +1798,7 @@
         const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
         await saveBridgeAsset({
           id,
-          name: `${state.fileName || 'spritesheet'}_for_bg_remover.png`,
+          name: `${outputBaseName()}_for_bg_remover.png`,
           type: 'image/png',
           blob,
           createdAt: Date.now(),
@@ -1876,7 +1877,7 @@
         });
       }
       return {
-        image: `${state.fileName}_aligned.png`,
+        image: outputImageName(),
         columns: cols,
         rows,
         frameCount,
@@ -1947,7 +1948,7 @@
       if (!output) return;
       const info = buildSpritesheetInfo(output);
       if (engine === 'godot') {
-        downloadText(buildGodotHelperScript(info), `${safeScriptName(state.fileName)}_sprite_player.gd`, 'text/x-gdscript');
+        downloadText(buildGodotHelperScript(info), `${outputBaseName()}_sprite_player.gd`, 'text/x-gdscript');
         setStatus('已下載 Godot 輔助腳本。');
         return;
       }
@@ -1988,11 +1989,25 @@
       ].join('\n');
     }
 
-    function safeScriptName(name) {
+    function toSafeBaseName(name) {
       return (name || 'ai_spritesheet')
         .replace(/\.[^.]+$/, '')
+        .toLowerCase()
         .replace(/[^a-zA-Z0-9_-]+/g, '_')
         .replace(/^_+|_+$/g, '') || 'ai_spritesheet';
+    }
+
+    function outputBaseName() {
+      const base = toSafeBaseName(state.fileName || 'ai_spritesheet');
+      return base.endsWith('_aligned') ? base : `${base}_aligned`;
+    }
+
+    function outputImageName() {
+      return `${outputBaseName()}.png`;
+    }
+
+    function outputJsonName() {
+      return `${outputBaseName()}.json`;
     }
 
     function buildGodotHelperScript(info) {
@@ -2014,7 +2029,7 @@
 
 func _ready() -> void:
 	load_from_json()
-	if autoplay and sprite_frames:
+	if autoplay and sprite_frames != null and sprite_frames.has_animation(animation_name):
 		play(animation_name)
 
 func load_from_json() -> void:
@@ -2033,19 +2048,26 @@ func load_from_json() -> void:
 		push_error("Cannot load spritesheet texture: " + spritesheet_texture_path)
 		return
 
+	var frames = info.get("frames", [])
+	if typeof(frames) != TYPE_ARRAY:
+		push_error("Invalid spritesheet JSON: frames must be an Array.")
+		return
+
 	var generated_frames := SpriteFrames.new()
 	generated_frames.add_animation(animation_name)
 	generated_frames.set_animation_speed(animation_name, float(info.get("fps", ${info.fps})))
 	generated_frames.set_animation_loop(animation_name, loop)
 
-	for frame in info.get("frames", []):
+	for frame in frames:
+		if typeof(frame) != TYPE_DICTIONARY:
+			continue
 		var atlas := AtlasTexture.new()
 		atlas.atlas = texture
 		atlas.region = Rect2(
 			int(frame.get("x", 0)),
 			int(frame.get("y", 0)),
-			int(frame.get("w", info.get("frameWidth", ${info.frameWidth}))),
-			int(frame.get("h", info.get("frameHeight", ${info.frameHeight})))
+			int(frame.get("w", info.get("frameWidth", 0))),
+			int(frame.get("h", info.get("frameHeight", 0)))
 		)
 		generated_frames.add_frame(animation_name, atlas)
 
