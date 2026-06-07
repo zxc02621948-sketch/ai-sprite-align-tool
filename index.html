@@ -245,7 +245,7 @@
       <button id="align-btn" type="button" title="依目前來源框與錨點設定產生新的 spritesheet。">自動對齊</button>
       <button id="play-btn" type="button" title="播放目前對齊結果；尚未對齊時播放原圖。">播放</button>
       <button id="export-btn" type="button" title="匯出右側目前的 spritesheet。">匯出 PNG</button>
-      <a class="tool-link" href="https://zxc02621948-sketch.github.io/game-asset-bg-remover/" target="_blank" rel="noopener noreferrer">素材去背助手</a>
+      <button id="send-bg-remover-btn" type="button" title="把目前 spritesheet 送到素材去背助手。">送到素材去背</button>
       <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">使用說明</a>
       <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">更新日誌</a>
       <label title="spritesheet 水平方向的格數。">欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
@@ -401,6 +401,7 @@
       loadToken: 0,
     };
 
+    const BG_REMOVER_URL = 'https://zxc02621948-sketch.github.io/game-asset-bg-remover/';
     const BRIDGE_DB_NAME = 'gameAssetToolBridge';
     const BRIDGE_STORE_NAME = 'assets';
 
@@ -451,6 +452,7 @@
     document.getElementById('export-bundle-btn').addEventListener('click', exportPngAndJson);
     document.getElementById('copy-godot-btn').addEventListener('click', () => copyEngineSettings('godot'));
     document.getElementById('copy-unity-btn').addEventListener('click', () => copyEngineSettings('unity'));
+    document.getElementById('send-bg-remover-btn').addEventListener('click', sendCurrentToBgRemover);
 
     for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.detectShape, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask, el.editSource, el.editMask, el.maskEditMode]) {
       input.addEventListener('change', () => {
@@ -562,6 +564,22 @@
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveBridgeAsset(record) {
+      const db = await openBridgeDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(BRIDGE_STORE_NAME, 'readwrite');
+        tx.objectStore(BRIDGE_STORE_NAME).put(record);
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = () => {
+          db.close();
+          reject(tx.error);
+        };
       });
     }
 
@@ -1658,10 +1676,47 @@
       setStatus('已匯出 PNG 與格子資料 JSON。');
     }
 
+    async function sendCurrentToBgRemover() {
+      const output = state.aligned || state.source;
+      if (!output) return;
+      try {
+        setStatus('正在準備送到素材去背助手...');
+        const blob = await imageDataToPngBlob(output);
+        const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        await saveBridgeAsset({
+          id,
+          name: `${state.fileName || 'spritesheet'}_for_bg_remover.png`,
+          type: 'image/png',
+          blob,
+          createdAt: Date.now(),
+          source: 'ai-sprite-align-tool',
+        });
+        const url = new URL(BG_REMOVER_URL);
+        url.searchParams.set('asset', id);
+        window.location.href = url.toString();
+      } catch (error) {
+        console.error(error);
+        setStatus('送出失敗，請改用匯出 PNG 後再匯入素材去背助手。');
+      }
+    }
+
     function getExportOutput() {
       if (!state.source) return null;
       if (!state.aligned) alignFrames();
       return state.aligned || state.source;
+    }
+
+    function imageDataToPngBlob(imageData) {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        canvas.getContext('2d').putImageData(imageData, 0, 0);
+        canvas.toBlob(blob => {
+          if (blob) resolve(blob);
+          else reject(new Error('PNG blob export failed'));
+        }, 'image/png');
+      });
     }
 
     function downloadPng(imageData, fileName, onDone = null) {
