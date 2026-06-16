@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>動畫格自動對齊工具</title>
+  <title>Sprite Frame Auto-Align Tool</title>
   <style>
     :root {
       color-scheme: dark;
@@ -296,34 +296,34 @@
   <div class="app" id="app">
     <div class="toolbar">
       <label class="file-btn">
-        <button type="button" title="載入要整理的 spritesheet。">開啟圖檔</button>
+        <button type="button" title="Load the spritesheet you want to clean up.">Open Image</button>
         <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
       </label>
-      <button id="align-btn" type="button" title="依目前來源框與錨點設定產生新的 spritesheet。">自動對齊</button>
-      <button id="play-btn" type="button" title="播放目前對齊結果；尚未對齊時播放原圖。">播放</button>
-      <button id="export-btn" type="button" title="匯出右側目前的 spritesheet。">匯出 PNG</button>
-      <button id="send-bg-remover-btn" type="button" title="把目前 spritesheet 送到素材去背助手。">送到素材去背</button>
-      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">使用說明</a>
-      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">更新日誌</a>
-      <a class="tool-link" href="./index.en.html">EN</a>
-      <label title="spritesheet 水平方向的格數。">欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
-      <label title="spritesheet 垂直方向的格數。">列 <input id="rows" type="number" min="1" max="32" value="2"></label>
-      <label title="未啟用共享命中點時，其他格會對齊到這一格。">基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
-      <span class="help" title="未啟用共享命中點時，其他格會對齊到這一格；啟用逐列對齊時，每一列會用同欄基準格。">?</span>
-      <label>對齊
-        <select id="anchor-mode" title="決定每格用哪個點來對齊。特效通常先用底部中心；斬擊或光球可試中心或視覺重心。">
-          <option value="center" title="用偵測範圍的中心對齊，適合中心穩定的特效。">主體中心</option>
-          <option value="bottom" selected title="用偵測範圍的底部中心對齊，適合落地爆炸、地面特效。">底部中心</option>
-          <option value="centroid" title="用不透明像素的重心對齊，適合形狀不規則但亮度分布穩定的特效。">視覺重心</option>
+      <button id="align-btn" type="button" title="Generate a new spritesheet from the current source frames and anchor settings.">Auto-Align</button>
+      <button id="play-btn" type="button" title="Play the current aligned result; plays the original before aligning.">Play</button>
+      <button id="export-btn" type="button" title="Export the current spritesheet shown on the right.">Export PNG</button>
+      <button id="send-bg-remover-btn" type="button" title="Send the current spritesheet to the BG Remover.">Send to BG Remover</button>
+      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">Guide</a>
+      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+      <a class="tool-link" href="./index.html">中文</a>
+      <label title="Number of columns across the spritesheet.">Cols <input id="cols" type="number" min="1" max="32" value="4"></label>
+      <label title="Number of rows down the spritesheet.">Rows <input id="rows" type="number" min="1" max="32" value="2"></label>
+      <label title="When the shared impact point is off, other cells align to this one.">Ref cell <input id="reference" type="number" min="1" max="256" value="1"></label>
+      <span class="help" title="When the shared impact point is off, other cells align to this one; with per-row align on, each row uses the reference cell in its own column.">?</span>
+      <label>Align
+        <select id="anchor-mode" title="Which point each cell aligns by. For effects, start with bottom-center; for slashes or orbs, try center or visual centroid.">
+          <option value="center" title="Aligns by the center of the detected region — good for effects with a stable center.">Subject center</option>
+          <option value="bottom" selected title="Aligns by the bottom-center of the detected region — good for ground impacts and floor effects.">Bottom center</option>
+          <option value="centroid" title="Aligns by the centroid of opaque pixels — good for irregular shapes with stable brightness.">Visual centroid</option>
         </select>
       </label>
-      <span class="help" title="錨點會影響播放是否跳動。底部中心適合地面特效，主體中心適合一般斬擊，視覺重心適合不規則光效。">?</span>
-      <label>底色
-        <select id="bg-mode" title="只影響預覽背景，不會改變輸出的透明度。">
-          <option value="checker" title="用棋盤格檢查透明背景。">棋盤格</option>
-          <option value="game" title="用接近遊戲內的暗底預覽亮色特效。">遊戲暗底</option>
-          <option value="black" title="用黑色背景檢查亮色邊緣。">黑底</option>
-          <option value="white" title="用白色背景檢查暗色雜邊。">白底</option>
+      <span class="help" title="The anchor affects whether playback jitters. Bottom-center suits ground effects, subject-center suits typical slashes, visual centroid suits irregular light effects.">?</span>
+      <label>Backdrop
+        <select id="bg-mode" title="Affects the preview background only; does not change output transparency.">
+          <option value="checker" title="Checkerboard, for inspecting transparent backgrounds.">Checkerboard</option>
+          <option value="game" title="A dark, in-game-like backdrop for previewing bright effects.">Game dark</option>
+          <option value="black" title="Black background, for inspecting bright edges.">Black</option>
+          <option value="white" title="White background, for inspecting dark fringing.">White</option>
         </select>
       </label>
     </div>
@@ -331,67 +331,67 @@
     <main class="main">
       <section class="work">
         <div class="panel">
-          <div class="panel-title"><span>原始 spritesheet</span><span id="source-info"></span></div>
+          <div class="panel-title"><span>Original spritesheet</span><span id="source-info"></span></div>
           <canvas id="source-canvas"></canvas>
         </div>
         <div class="panel">
-          <div class="panel-title"><span>對齊後 spritesheet</span><span id="aligned-info"></span></div>
+          <div class="panel-title"><span>Aligned spritesheet</span><span id="aligned-info"></span></div>
           <canvas id="aligned-canvas"></canvas>
         </div>
         <div class="panel player-panel">
-          <div class="panel-title"><span>動畫預覽</span><span id="frame-info"></span></div>
+          <div class="panel-title"><span>Animation preview</span><span id="frame-info"></span></div>
           <canvas id="player-canvas"></canvas>
         </div>
       </section>
 
       <aside class="panel side">
-        <div class="panel-title">設定</div>
+        <div class="panel-title">Settings</div>
         <div>
           <div class="control advanced">
-            <div class="control-head"><span>Alpha 偵測門檻</span><b id="alpha-label">12</b></div>
+            <div class="control-head"><span>Alpha threshold</span><b id="alpha-label">12</b></div>
             <input id="alpha-threshold" type="range" min="1" max="180" value="12">
           </div>
           <div class="control advanced">
-            <div class="control-head"><span>保留格邊距</span><b id="padding-label">0</b></div>
+            <div class="control-head"><span>Keep cell padding</span><b id="padding-label">0</b></div>
             <input id="frame-padding" type="range" min="0" max="80" value="0">
           </div>
           <div class="control">
-            <div class="control-head"><span>取樣外溢邊距</span><b id="bleed-label">24</b></div>
-            <input id="bleed-padding" type="range" min="0" max="120" value="24" title="來源框和自動偵測可向格線外看的距離。尾韻超出平均格線時可調大。">
+            <div class="control-head"><span>Sampling bleed</span><b id="bleed-label">24</b></div>
+            <input id="bleed-padding" type="range" min="0" max="120" value="24" title="How far source frames and auto-detection may look beyond the grid lines. Increase it when trailing pixels spill past the average grid.">
           </div>
           <div class="control">
-            <div class="control-head"><span>播放速度 FPS</span><b id="fps-label">8</b></div>
-            <input id="fps" type="range" min="1" max="24" value="8" title="動畫預覽播放速度，不影響輸出檔。">
+            <div class="control-head"><span>Playback FPS</span><b id="fps-label">8</b></div>
+            <input id="fps" type="range" min="1" max="24" value="8" title="Animation preview speed; does not affect the exported file.">
           </div>
-          <label title="顯示來源框、偵測框和錨點，方便檢查對齊問題。"><input id="show-boxes" type="checkbox" checked> 顯示偵測框與錨點</label>
-          <span class="help" title="開啟來源框編輯時會自動簡化畫面，只保留來源框，避免框線互相干擾。">?</span>
+          <label title="Show source frames, detection boxes, and anchors to help inspect alignment."><input id="show-boxes" type="checkbox" checked> Show detection boxes & anchors</label>
+          <span class="help" title="Editing source frames auto-simplifies the view to just the source frames, so the overlays do not interfere.">?</span>
           <br><br>
           <label class="advanced">
-            偵測形狀
+            Detect shape
             <select id="detect-shape">
-              <option value="rect">矩形</option>
-              <option value="diagonal">斜向特效</option>
+              <option value="rect">Rectangle</option>
+              <option value="diagonal">Diagonal effect</option>
             </select>
           </label>
           <br class="advanced"><br class="advanced">
-          <label title="每一列各自使用同欄基準格對齊。上下排是不同段落時有用；若上下排要連成同一段動畫，可能會造成跳動。"><input id="row-align" type="checkbox"> 逐列對齊</label>
-          <span class="help" title="4x2 時，開啟後第 1 列用第 1 格作基準，第 2 列用第 5 格作基準；關閉時全部都用基準格。共享命中點開啟時通常可關掉。">?</span>
+          <label title="Each row aligns using the reference cell in its own column. Useful when rows are separate sequences; if the rows should play as one animation, this can cause jitter."><input id="row-align" type="checkbox"> Per-row align</label>
+          <span class="help" title="For 4x2: when on, row 1 uses cell 1 as its reference and row 2 uses cell 5; when off, everything uses the reference cell. Usually leave it off when the shared impact point is on.">?</span>
           <br><br>
-          <label title="把所有格對到同一個畫面命中點，適合上下排接續播放，能減少跨列跳動。"><input id="shared-impact" type="checkbox" checked> 共享命中點（跨列接續）</label>
-          <span class="help" title="建議用於同一段動畫被排成多列的 spritesheet。若開啟後仍微飄，可搭配手動來源框或手動錨點修正。">?</span>
+          <label title="Aligns every cell to a single on-screen impact point — good for rows that play in sequence, reducing cross-row jitter."><input id="shared-impact" type="checkbox" checked> Shared impact point (cross-row)</label>
+          <span class="help" title="Recommended when one animation is laid out across multiple rows. If it still drifts slightly, fix it with manual source frames or manual anchors.">?</span>
           <br><br>
-          <label class="advanced"><input id="expand-output" type="checkbox" checked> 自動擴大格子避免裁切</label>
+          <label class="advanced"><input id="expand-output" type="checkbox" checked> Auto-expand cells to avoid clipping</label>
           <br class="advanced"><br class="advanced">
-          <label class="advanced"><input id="subject-mask" type="checkbox" checked> 只保留每格主體，避免撈到隔壁</label>
+          <label class="advanced"><input id="subject-mask" type="checkbox" checked> Keep only each cell’s subject, avoiding neighbors</label>
           <br class="advanced"><br class="advanced">
-          <label title="開啟後可拖曳每一幀的藍色來源框，手動把框外尾韻納入，或避開隔壁幀。"><input id="edit-source" type="checkbox"> 編輯來源框</label>
-          <span class="help" title="拖框內可移動來源框，拖邊或角可拉伸。平均格線只當初始參考，輸出會用你調整後的來源框取圖。">?</span>
-          <button id="reset-source-rect" type="button" title="把目前選中的來源框恢復成原始平均格線。">重設來源框</button>
+          <label title="When on, drag each frame’s blue source box to include trailing pixels outside it, or to avoid a neighboring frame."><input id="edit-source" type="checkbox"> Edit source frames</label>
+          <span class="help" title="Drag inside a box to move it; drag an edge or corner to resize. The average grid is only an initial guide — export samples from your adjusted source frames.">?</span>
+          <button id="reset-source-rect" type="button" title="Reset the selected source frame back to the original average grid.">Reset source frame</button>
           <br><br>
-          <label class="advanced"><input id="edit-mask" type="checkbox"> 編輯遮罩</label>
+          <label class="advanced"><input id="edit-mask" type="checkbox"> Edit mask</label>
           <br class="advanced"><br class="advanced">
           <label class="advanced">
-            遮罩格數
+            Mask cells
             <select id="mask-grid-size">
               <option value="8">8x8</option>
               <option value="12">12x12</option>
@@ -402,16 +402,16 @@
           </label>
           <br class="advanced"><br class="advanced">
           <label class="advanced">
-            修正用途
+            Fix for
             <select id="mask-edit-mode">
-              <option value="visual">只修畫面</option>
-              <option value="anchor">遮罩重算錨點</option>
-              <option value="manual-anchor">手動錨點</option>
+              <option value="visual">Visual only</option>
+              <option value="anchor">Mask recomputes anchor</option>
+              <option value="manual-anchor">Manual anchor</option>
             </select>
           </label>
           <br class="advanced"><br class="advanced">
           <label class="advanced">
-            縮放留白
+            Repack margin
             <select id="repack-scale">
               <option value="100" selected>100%</option>
               <option value="90">90%</option>
@@ -420,40 +420,40 @@
             </select>
           </label>
           <div class="export-tools">
-            <button id="export-bundle-btn" type="button" title="匯出目前對齊結果的 PNG，並另外下載一份格子資料 JSON。">匯出 PNG + 資料</button>
-            <button id="copy-godot-btn" type="button" title="複製 Godot 匯入時需要填的欄列與單格尺寸。">複製 Godot 設定</button>
-            <button id="copy-unity-btn" type="button" title="複製 Unity 匯入時需要填的欄列與單格尺寸。">複製 Unity 設定</button>
-            <button id="godot-helper-btn" type="button" title="下載 Godot 4 AnimatedSprite2D 輔助腳本。">下載 Godot 腳本</button>
-            <button id="unity-helper-btn" type="button" title="下載 Unity SpriteRenderer 播放輔助腳本。">下載 Unity 腳本</button>
+            <button id="export-bundle-btn" type="button" title="Export the current aligned PNG, plus a separate grid-data JSON.">Export PNG + Data</button>
+            <button id="copy-godot-btn" type="button" title="Copy the columns, rows, and cell size you need for the Godot import.">Copy Godot settings</button>
+            <button id="copy-unity-btn" type="button" title="Copy the columns, rows, and cell size you need for the Unity import.">Copy Unity settings</button>
+            <button id="godot-helper-btn" type="button" title="Download a Godot 4 AnimatedSprite2D helper script.">Download Godot script</button>
+            <button id="unity-helper-btn" type="button" title="Download a Unity SpriteRenderer playback helper script.">Download Unity script</button>
           </div>
           <div class="hint">
             <br>
-            使用方式：<br>
-            1. 拖入 spritesheet。<br>
-            2. 設定欄、列，例如 4x2。<br>
-            3. 若特效被格線切到，提高「取樣外溢邊距」。<br>
-            4. 按「分析格子」看每格主體框。<br>
-            5. 若上下排是斬擊接爆炸，開「共享命中點」。<br>
-            6. 按「自動對齊」。<br>
-            7. 播放確認不再亂飄後匯出。<br><br>
-            透明背景素材效果最好。暗底素材也能抓，但準度會比較差。
+            How to use:<br>
+            1. Drop in a spritesheet.<br>
+            2. Set columns and rows, e.g. 4x2.<br>
+            3. If the effect is cut by grid lines, raise "Sampling bleed".<br>
+            4. Click "Analyze cells" to see each cell’s subject box.<br>
+            5. If the rows are slash-into-explosion, turn on "Shared impact point".<br>
+            6. Click "Auto-Align".<br>
+            7. Play to confirm it no longer drifts, then export.<br><br>
+            Transparent-background assets work best. Dark-background assets work too, but with lower accuracy.
           </div>
         </div>
       </aside>
     </main>
 
-    <div class="status" id="status">請開啟 spritesheet，或直接把圖片拖進視窗。</div>
+    <div class="status" id="status">Open a spritesheet, or just drop an image into the window.</div>
   </div>
 
   <div class="modal" id="settings-modal" aria-hidden="true">
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
       <div class="modal-head">
-        <div class="modal-title" id="settings-modal-title">引擎設定內容</div>
-        <button id="settings-modal-close" type="button">關閉</button>
+        <div class="modal-title" id="settings-modal-title">Engine settings</div>
+        <button id="settings-modal-close" type="button">Close</button>
       </div>
       <textarea id="settings-modal-text" class="modal-text" spellcheck="false"></textarea>
       <div class="modal-actions">
-        <button id="settings-modal-copy" type="button">複製內容</button>
+        <button id="settings-modal-copy" type="button">Copy</button>
       </div>
     </div>
   </div>
@@ -577,7 +577,7 @@
       frame.copyRect = frame.sourceRect || frame.rect;
       clearAlignedOutput();
       analyze(true);
-      setStatus(`已重設第 ${frame.index + 1} 格來源框。`);
+      setStatus(`Reset source frame for cell ${frame.index + 1}.`);
       render();
     });
     for (const [input, label] of [[el.alpha, el.alphaLabel], [el.padding, el.paddingLabel], [el.bleed, el.bleedLabel], [el.fps, el.fpsLabel]]) {
@@ -623,10 +623,10 @@
       const id = new URLSearchParams(window.location.search).get('asset');
       if (!id) return;
       try {
-        setStatus('正在接收素材去背助手送來的圖片...');
+        setStatus('Receiving the image sent from the BG Remover...');
         const record = await getBridgeAsset(id);
         if (!record?.blob) {
-          setStatus('找不到傳送過來的圖片，請從素材去背助手重新送出。');
+          setStatus('Could not find the sent image; please resend it from the BG Remover.');
           return;
         }
         const file = new File([record.blob], record.name || 'transparent_spritesheet.png', { type: record.type || record.blob.type || 'image/png' });
@@ -637,7 +637,7 @@
         history.replaceState(null, '', url.toString());
       } catch (error) {
         console.error(error);
-        setStatus('接收圖片失敗，請改用匯入 PNG。');
+        setStatus('Failed to receive the image; please import a PNG instead.');
       }
     }
 
@@ -722,7 +722,7 @@
         resetImageState();
         state.fileName = toSafeBaseName(file.name);
         state.source = imageToData(img);
-        setStatus(`已載入 ${file.name}  ${img.naturalWidth}x${img.naturalHeight}`);
+        setStatus(`Loaded ${file.name}  ${img.naturalWidth}x${img.naturalHeight}`);
         analyze(true);
         render();
         el.file.value = '';
@@ -731,7 +731,7 @@
         URL.revokeObjectURL(url);
         if (token !== state.loadToken) return;
         el.file.value = '';
-        setStatus('圖片載入失敗。');
+        setStatus('Failed to load the image.');
       };
       img.src = url;
     }
@@ -766,7 +766,7 @@
         };
         applyManualFrameEdit(frame);
         clearAlignedOutput();
-        setStatus(`已設定第 ${frame.index + 1} 格手動錨點。`);
+        setStatus(`Set a manual anchor for cell ${frame.index + 1}.`);
         render();
         return;
       }
@@ -780,7 +780,7 @@
       frame.manualMask.cells[index] = forceRemove || event.altKey ? false : !frame.manualMask.cells[index];
       applyManualFrameEdit(frame);
       clearAlignedOutput();
-      setStatus(`已修正第 ${frame.index + 1} 格遮罩。${frame.manualAffectsAnchor ? '會重算錨點。' : '只修畫面。'}`);
+      setStatus(`Fixed the mask for cell ${frame.index + 1}. ${frame.manualAffectsAnchor ? 'Anchor will be recomputed.' : 'Visual only.'}`);
       render();
     }
 
@@ -832,7 +832,7 @@
       const frame = state.frames[state.sourceDrag.frameIndex];
       state.sourceDrag = null;
       clearAlignedOutput();
-      if (frame) setStatus(`已調整第 ${frame.index + 1} 格來源框。`);
+      if (frame) setStatus(`Adjusted the source frame for cell ${frame.index + 1}.`);
       render();
     }
 
@@ -995,7 +995,7 @@
         }
         state.frames.push(frame);
       }
-      if (!silent) setStatus(`分析完成：${cols}x${rows}，共 ${total} 格。`);
+      if (!silent) setStatus(`Analysis done: ${cols}x${rows}, ${total} cells.`);
       render();
     }
 
@@ -1698,10 +1698,10 @@
         state.selectedFrameIndex = originalSelectedFrameIndex;
       }
       const alignLabel = sharedImpact
-        ? '共享命中點'
-        : (el.rowAlign.checked ? '逐列對齊' : `基準格：${refIndex + 1}`);
-      const repackLabel = usingRepack ? `，縮放留白 ${repackPercent}%` : '';
-      setStatus(`已對齊 ${aligned ? cols * rows : state.frames.length} 格。${alignLabel}${repackLabel}，輸出格：${outFrameW}x${outFrameH}`);
+        ? 'shared impact point'
+        : (el.rowAlign.checked ? 'Per-row align' : `ref cell: ${refIndex + 1}`);
+      const repackLabel = usingRepack ? `, repack margin ${repackPercent}%` : '';
+      setStatus(`Aligned ${aligned ? cols * rows : state.frames.length} frames. ${alignLabel}${repackLabel} · output cell: ${outFrameW}x${outFrameH}`);
       render();
     }
 
@@ -1757,7 +1757,7 @@
 
     function togglePlay() {
       state.playing = !state.playing;
-      document.getElementById('play-btn').textContent = state.playing ? '停止' : '播放';
+      document.getElementById('play-btn').textContent = state.playing ? 'Stop' : 'Play';
       if (state.playing) requestAnimationFrame(playLoop);
     }
 
@@ -1778,7 +1778,7 @@
       if (!output) return;
       const imageName = outputImageName();
       downloadPng(output, imageName, () => {
-        setStatus(`已匯出 ${imageName}`);
+        setStatus(`Exported ${imageName}`);
       });
     }
 
@@ -1787,14 +1787,14 @@
       if (!output) return;
       downloadPng(output, outputImageName());
       downloadText(JSON.stringify(buildSpritesheetInfo(output), null, 2), outputJsonName(), 'application/json');
-      setStatus('已匯出 PNG 與格子資料 JSON。');
+      setStatus('Exported the PNG and the grid-data JSON.');
     }
 
     async function sendCurrentToBgRemover() {
       const output = state.aligned || state.source;
       if (!output) return;
       try {
-        setStatus('正在準備送到素材去背助手...');
+        setStatus('Preparing to send to the BG Remover...');
         const blob = await imageDataToPngBlob(output);
         const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
         await saveBridgeAsset({
@@ -1810,7 +1810,7 @@
         window.location.href = url.toString();
       } catch (error) {
         console.error(error);
-        setStatus('送出失敗，請改用匯出 PNG 後再匯入素材去背助手。');
+        setStatus('Send failed; please export the PNG and import it into the BG Remover instead.');
       }
     }
 
@@ -1921,7 +1921,7 @@
       const text = engine === 'godot'
         ? buildGodotSettingsText(info)
         : buildUnitySettingsText(info);
-      openSettingsModal(`${engine === 'godot' ? 'Godot' : 'Unity'} 設定內容`, text);
+      openSettingsModal(`${engine === 'godot' ? 'Godot' : 'Unity'} settings`, text);
     }
 
     function openSettingsModal(title, text) {
@@ -1931,7 +1931,7 @@
       el.settingsModal.setAttribute('aria-hidden', 'false');
       el.settingsModalText.focus();
       el.settingsModalText.select();
-      setStatus('已開啟設定內容，可視需要複製給 AI 或引擎導入流程。');
+      setStatus('Opened the settings; copy it as needed for an AI or engine import flow.');
     }
 
     function closeSettingsModal() {
@@ -1941,7 +1941,7 @@
 
     async function copySettingsModalText() {
       await copyText(el.settingsModalText.value);
-      setStatus('已複製設定內容。');
+      setStatus('Copied the settings.');
     }
 
     function exportEngineHelper(engine) {
@@ -1950,43 +1950,43 @@
       const info = buildSpritesheetInfo(output);
       if (engine === 'godot') {
         downloadText(buildGodotHelperScript(info), `${outputBaseName()}_sprite_player.gd`, 'text/x-gdscript');
-        setStatus('已下載 Godot 輔助腳本。');
+        setStatus('Downloaded the Godot helper script.');
         return;
       }
       downloadText(buildUnityHelperScript(info), 'AiSpriteSheetAnimator.cs', 'text/x-csharp');
-      setStatus('已下載 Unity 輔助腳本。');
+      setStatus('Downloaded the Unity helper script.');
     }
 
     function buildGodotSettingsText(info) {
       return [
-        'Godot 匯入設定',
-        `圖片：${info.image}`,
-        `切圖：${info.columns} 欄 x ${info.rows} 列，共 ${info.frameCount} 格`,
-        `單格尺寸：${info.frameWidth} x ${info.frameHeight}`,
-        `建議播放速度：${info.fps} FPS`,
+        'Godot import settings',
+        `Image: ${info.image}`,
+        `Slicing: ${info.columns} cols x ${info.rows} rows, ${info.frameCount} cells`,
+        `Cell size: ${info.frameWidth} x ${info.frameHeight}`,
+        `Suggested playback: ${info.fps} FPS`,
         '',
-        '用法：',
-        '1. 按「匯出 PNG + 資料」下載 PNG 與 JSON。',
-        '2. 按「下載 Godot 腳本」，把 .gd、PNG、JSON 放進 Godot 專案。',
-        '3. 建立 AnimatedSprite2D，掛上腳本後指定 PNG 與 JSON。',
-        '4. 若只想手動切圖，也可用上方欄列與單格尺寸設定 SpriteFrames。',
+        'How to use:',
+        '1. Click "Export PNG + Data" to download the PNG and JSON.',
+        '2. Click "Download Godot script" and put the .gd, PNG, and JSON into your Godot project.',
+        '3. Create an AnimatedSprite2D, attach the script, then point it at the PNG and JSON.',
+        '4. To slice manually, use the columns/rows and cell size above to set up SpriteFrames.',
       ].join('\n');
     }
 
     function buildUnitySettingsText(info) {
       return [
-        'Unity 匯入設定',
-        `圖片：${info.image}`,
+        'Unity import settings',
+        `Image: ${info.image}`,
         'Sprite Mode：Multiple',
-        `切圖：${info.columns} 欄 x ${info.rows} 列，共 ${info.frameCount} 格`,
-        `單格尺寸：${info.frameWidth} x ${info.frameHeight}`,
-        `建議播放速度：${info.fps} FPS`,
+        `Slicing: ${info.columns} cols x ${info.rows} rows, ${info.frameCount} cells`,
+        `Cell size: ${info.frameWidth} x ${info.frameHeight}`,
+        `Suggested playback: ${info.fps} FPS`,
         '',
-        '用法：',
-        '1. 按「匯出 PNG + 資料」下載 PNG 與 JSON。',
-        '2. 按「下載 Unity 腳本」，把 .cs、PNG、JSON 放進 Assets。',
-        '3. 建立 GameObject + SpriteRenderer，掛上腳本後指定 Texture 與 JSON。',
-        '4. 若只想手動切圖，也可用上方欄列與單格尺寸在 Sprite Editor 切圖。',
+        'How to use:',
+        '1. Click "Export PNG + Data" to download the PNG and JSON.',
+        '2. Click "Download Unity script" and put the .cs, PNG, and JSON into Assets.',
+        '3. Create a GameObject + SpriteRenderer, attach the script, then point it at the Texture and JSON.',
+        '4. To slice manually, use the columns/rows and cell size above in the Sprite Editor.',
       ].join('\n');
     }
 
@@ -2261,7 +2261,7 @@ public class AiSpriteSheetAnimator : MonoBehaviour
       el.sourceInfo.textContent = state.source ? `${state.source.width}x${state.source.height}` : '';
       el.alignedInfo.textContent = state.aligned
         ? `${state.aligned.width}x${state.aligned.height}`
-        : (repackPreview ? `${repackPreview.width}x${repackPreview.height} 預覽` : '');
+        : (repackPreview ? `${repackPreview.width}x${repackPreview.height} preview` : '');
     }
 
     function drawSheet(canvas, imageData, frames) {
@@ -2309,7 +2309,7 @@ public class AiSpriteSheetAnimator : MonoBehaviour
       ctx.imageSmoothingEnabled = scale < 1;
       if (ctx.imageSmoothingEnabled) ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(temp, src.x, src.y, src.w, src.h, dx, dy, dw, dh);
-      el.frameInfo.textContent = `第 ${index + 1} / ${total} 格`;
+      el.frameInfo.textContent = `cell ${index + 1} / ${total}`;
     }
 
     function drawFrameGuides(ctx, frames, baseX, baseY, scale) {
@@ -2455,7 +2455,7 @@ public class AiSpriteSheetAnimator : MonoBehaviour
     function drawEmpty(ctx) {
       ctx.fillStyle = '#b7aa90';
       ctx.font = '16px Microsoft JhengHei, sans-serif';
-      ctx.fillText('拖放 spritesheet 到這裡', 18, 32);
+      ctx.fillText('Drop a spritesheet here', 18, 32);
     }
 
     function imageDataToCanvas(imageData) {
