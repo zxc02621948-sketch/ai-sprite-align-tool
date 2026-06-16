@@ -301,15 +301,29 @@
       </label>
       <button id="align-btn" type="button" title="依目前來源框與錨點設定產生新的 spritesheet。">自動對齊</button>
       <button id="play-btn" type="button" title="播放目前對齊結果；尚未對齊時播放原圖。">播放</button>
+      <label>播放範圍
+        <select id="play-scope" title="行走圖通常每一列是一個方向，建議只播放目前列。特效跨列接續時可播放全部。">
+          <option value="all" selected>全部格</option>
+          <option value="row">目前列</option>
+        </select>
+      </label>
       <button id="export-btn" type="button" title="匯出右側目前的 spritesheet。">匯出 PNG</button>
       <button id="send-bg-remover-btn" type="button" title="把目前 spritesheet 送到素材去背助手。">送到素材去背</button>
       <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">使用說明</a>
       <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">更新日誌</a>
       <a class="tool-link" href="./index.en.html">EN</a>
+      <label>素材
+        <select id="sheet-mode" title="人物行走圖會固定使用原始格子，不向外取樣，也不把所有方向拉到同一命中點。">
+          <option value="effect" selected>特效 / 一般</option>
+          <option value="walk">人物行走圖</option>
+        </select>
+      </label>
+      <button id="preset-walk-3x4" type="button" title="套用 3 欄 x 4 列人物行走圖設定。">3x4 行走</button>
+      <button id="preset-walk-4x4" type="button" title="套用 4 欄 x 4 列人物行走圖設定。">4x4 行走</button>
       <label title="spritesheet 水平方向的格數。">欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
       <label title="spritesheet 垂直方向的格數。">列 <input id="rows" type="number" min="1" max="32" value="2"></label>
-      <label title="未啟用共享命中點時，其他格會對齊到這一格。">基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
-      <span class="help" title="未啟用共享命中點時，其他格會對齊到這一格；啟用逐列對齊時，每一列會用同欄基準格。">?</span>
+      <label title="未啟用共享原點時，其他格會對齊到這一格。">基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
+      <span class="help" title="未啟用共享原點時，其他格會對齊到這一格；啟用逐列對齊時，每一列會用同欄基準格。">?</span>
       <label>對齊
         <select id="anchor-mode" title="決定每格用哪個點來對齊。特效通常先用底部中心；斬擊或光球可試中心或視覺重心。">
           <option value="center" title="用偵測範圍的中心對齊，適合中心穩定的特效。">主體中心</option>
@@ -374,11 +388,11 @@
             </select>
           </label>
           <br class="advanced"><br class="advanced">
-          <label title="每一列各自使用同欄基準格對齊。上下排是不同段落時有用；若上下排要連成同一段動畫，可能會造成跳動。"><input id="row-align" type="checkbox"> 逐列對齊</label>
-          <span class="help" title="4x2 時，開啟後第 1 列用第 1 格作基準，第 2 列用第 5 格作基準；關閉時全部都用基準格。共享命中點開啟時通常可關掉。">?</span>
+          <label title="每一列各自使用同欄基準格對齊。適合各列彼此不需要共用世界原點的素材。"><input id="row-align" type="checkbox"> 逐列對齊</label>
+          <span class="help" title="4x2 時，開啟後第 1 列用第 1 格作基準，第 2 列用第 5 格作基準。人物行走圖通常更適合使用共享原點。">?</span>
           <br><br>
-          <label title="把所有格對到同一個畫面命中點，適合上下排接續播放，能減少跨列跳動。"><input id="shared-impact" type="checkbox" checked> 共享命中點（跨列接續）</label>
-          <span class="help" title="建議用於同一段動畫被排成多列的 spritesheet。若開啟後仍微飄，可搭配手動來源框或手動錨點修正。">?</span>
+          <label title="把所有格對到同一個原點。人物行走圖用來共用角色落地點，特效圖用來共用命中點。"><input id="shared-impact" type="checkbox" checked> 共享原點 / 命中點</label>
+          <span class="help" title="人物行走圖通常應開啟，避免不同方向站在不同地圖位置；特效跨列接續播放時也適合開啟。若仍微飄，可搭配手動來源框或手動錨點修正。">?</span>
           <br><br>
           <label class="advanced"><input id="expand-output" type="checkbox" checked> 自動擴大格子避免裁切</label>
           <br class="advanced"><br class="advanced">
@@ -433,7 +447,7 @@
             2. 設定欄、列，例如 4x2。<br>
             3. 若特效被格線切到，提高「取樣外溢邊距」。<br>
             4. 按「分析格子」看每格主體框。<br>
-            5. 若上下排是斬擊接爆炸，開「共享命中點」。<br>
+            5. 若是人物行走圖或跨列特效，開「共享原點 / 命中點」。<br>
             6. 按「自動對齊」。<br>
             7. 播放確認不再亂飄後匯出。<br><br>
             透明背景素材效果最好。暗底素材也能抓，但準度會比較差。
@@ -468,15 +482,20 @@
       outputLayout: null,
       selectedFrameIndex: -1,
       sourceDrag: null,
+      gridSignature: '',
       playing: false,
       playIndex: 0,
       playTimer: 0,
       loadToken: 0,
     };
 
-    const BG_REMOVER_URL = 'https://zxc02621948-sketch.github.io/game-asset-bg-remover/';
+    const BG_REMOVER_URL = siblingToolUrl('game-asset-bg-remover');
     const BRIDGE_DB_NAME = 'gameAssetToolBridge';
     const BRIDGE_STORE_NAME = 'assets';
+
+    function siblingToolUrl(folderName) {
+      return new URL(`../${folderName}/`, window.location.href).toString();
+    }
 
     const el = {
       app: document.getElementById('app'),
@@ -485,11 +504,13 @@
       alignedCanvas: document.getElementById('aligned-canvas'),
       playerCanvas: document.getElementById('player-canvas'),
       status: document.getElementById('status'),
+      sheetMode: document.getElementById('sheet-mode'),
       cols: document.getElementById('cols'),
       rows: document.getElementById('rows'),
       reference: document.getElementById('reference'),
       anchorMode: document.getElementById('anchor-mode'),
       bgMode: document.getElementById('bg-mode'),
+      playScope: document.getElementById('play-scope'),
       alpha: document.getElementById('alpha-threshold'),
       padding: document.getElementById('frame-padding'),
       bleed: document.getElementById('bleed-padding'),
@@ -526,6 +547,10 @@
     document.getElementById('analyze-btn')?.addEventListener('click', analyze);
     document.getElementById('align-btn').addEventListener('click', alignFrames);
     document.getElementById('play-btn').addEventListener('click', togglePlay);
+    el.playScope.addEventListener('change', () => {
+      state.playIndex = 0;
+      render();
+    });
     document.getElementById('export-btn').addEventListener('click', exportPng);
     document.getElementById('export-bundle-btn').addEventListener('click', exportPngAndJson);
     document.getElementById('copy-godot-btn').addEventListener('click', () => copyEngineSettings('godot'));
@@ -533,6 +558,8 @@
     document.getElementById('godot-helper-btn').addEventListener('click', () => exportEngineHelper('godot'));
     document.getElementById('unity-helper-btn').addEventListener('click', () => exportEngineHelper('unity'));
     document.getElementById('send-bg-remover-btn').addEventListener('click', sendCurrentToBgRemover);
+    document.getElementById('preset-walk-3x4').addEventListener('click', () => applyWalkPreset(3, 4));
+    document.getElementById('preset-walk-4x4').addEventListener('click', () => applyWalkPreset(4, 4));
     el.settingsModalClose.addEventListener('click', closeSettingsModal);
     el.settingsModalCopy.addEventListener('click', copySettingsModalText);
     el.settingsModal.addEventListener('click', event => {
@@ -542,8 +569,10 @@
       if (event.key === 'Escape' && el.settingsModal.classList.contains('open')) closeSettingsModal();
     });
 
-    for (const input of [el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.detectShape, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask, el.editSource, el.editMask, el.maskEditMode]) {
+    for (const input of [el.sheetMode, el.cols, el.rows, el.reference, el.anchorMode, el.bgMode, el.showBoxes, el.detectShape, el.rowAlign, el.sharedImpact, el.expandOutput, el.subjectMask, el.editSource, el.editMask, el.maskEditMode]) {
       input.addEventListener('change', () => {
+        if (input === el.sheetMode) applyModeDefaults();
+        if ([el.sheetMode, el.cols, el.rows].includes(input)) discardFrameEdits();
         if (![el.bgMode, el.showBoxes, el.editSource, el.editMask].includes(input)) clearAlignedOutput();
         analyze(true);
         render();
@@ -571,7 +600,7 @@
       const frame = state.frames[state.selectedFrameIndex];
       if (!frame) return;
       frame.sourceRect = frame.rect;
-      frame.sampleRect = el.detectShape?.value === 'diagonal'
+      frame.sampleRect = isWalkSheetMode() || el.detectShape?.value === 'diagonal'
         ? frame.rect
         : expandRect(frame.rect, Number(el.bleed.value), state.source.width, state.source.height);
       frame.copyRect = frame.sourceRect || frame.rect;
@@ -608,6 +637,7 @@
       });
     }
     window.addEventListener('resize', render);
+    updateModeControlState();
     loadBridgeAssetFromQuery();
 
     function setStatus(text) {
@@ -617,6 +647,59 @@
     function clearAlignedOutput() {
       state.aligned = null;
       state.outputLayout = null;
+    }
+
+    function discardFrameEdits() {
+      state.frames = [];
+      state.shifts = [];
+      state.selectedFrameIndex = -1;
+      state.sourceDrag = null;
+      state.gridSignature = '';
+    }
+
+    function isWalkSheetMode() {
+      return el.sheetMode?.value === 'walk';
+    }
+
+    function syncRangeLabels() {
+      el.alphaLabel.textContent = el.alpha.value;
+      el.paddingLabel.textContent = el.padding.value;
+      el.bleedLabel.textContent = el.bleed.value;
+      el.fpsLabel.textContent = el.fps.value;
+    }
+
+    function updateModeControlState() {
+      for (const input of [el.detectShape, el.sharedImpact, el.expandOutput, el.subjectMask, el.bleed, el.padding]) {
+        input.disabled = false;
+      }
+    }
+
+    function applyModeDefaults() {
+      updateModeControlState();
+      if (!isWalkSheetMode()) return;
+      el.anchorMode.value = 'bottom';
+      el.detectShape.value = 'rect';
+      el.rowAlign.checked = true;
+      el.sharedImpact.checked = true;
+      el.expandOutput.checked = false;
+      el.subjectMask.checked = false;
+      el.playScope.value = 'all';
+      el.padding.value = '0';
+      el.bleed.value = '0';
+      syncRangeLabels();
+    }
+
+    function applyWalkPreset(cols, rows) {
+      el.sheetMode.value = 'walk';
+      el.cols.value = String(cols);
+      el.rows.value = String(rows);
+      el.reference.value = '1';
+      applyModeDefaults();
+      discardFrameEdits();
+      clearAlignedOutput();
+      analyze(true);
+      render();
+      setStatus(`已套用 ${cols}x${rows} 人物行走圖模式：固定格內取樣、共享角色原點。`);
     }
 
     async function loadBridgeAssetFromQuery() {
@@ -709,6 +792,7 @@
       state.shifts = [];
       state.selectedFrameIndex = -1;
       state.sourceDrag = null;
+      state.gridSignature = '';
       state.playIndex = 0;
     }
 
@@ -953,27 +1037,51 @@
       el.reference.max = String(total);
       if (Number(el.reference.value) > total) el.reference.value = String(total);
 
-      const previousEdits = new Map(state.frames.map(frame => [frame.index, {
+      const signature = gridSignature(cols, rows);
+      const canReuseEdits = state.gridSignature === signature;
+      if (!canReuseEdits) {
+        state.selectedFrameIndex = -1;
+        state.sourceDrag = null;
+      }
+      const previousEdits = canReuseEdits ? new Map(state.frames.map(frame => [frame.index, {
         sourceRect: frame.sourceRect,
         manualMask: frame.manualMask,
         manualAnchor: frame.manualAnchor,
         manualAffectsAnchor: frame.manualAffectsAnchor,
-      }]));
+      }])) : new Map();
       state.frames = [];
-      const bleed = Number(el.bleed.value);
-      const diagonalDetection = el.detectShape?.value === 'diagonal';
+      const walkSheet = isWalkSheetMode();
+      const bleed = walkSheet ? 0 : Number(el.bleed.value);
+      const diagonalDetection = !walkSheet && el.detectShape?.value === 'diagonal';
+      // Walk sheets: snap cut lines to transparent valleys so a cell never slices an
+      // adjacent character's hair. Other modes keep the plain even grid.
+      let colCuts, rowCuts;
+      if (walkSheet) {
+        const prof = buildAlphaProfiles(40);
+        colCuts = snapCuts(prof.px, cols, state.source.width);
+        rowCuts = snapCuts(prof.py, rows, state.source.height);
+      } else {
+        colCuts = evenCuts(cols, state.source.width);
+        rowCuts = evenCuts(rows, state.source.height);
+      }
+      state.colCuts = colCuts;
+      state.rowCuts = rowCuts;
       for (let index = 0; index < total; index++) {
         const col = index % cols;
         const row = Math.floor(index / cols);
-        const rect = gridRect(state.source.width, state.source.height, cols, rows, col, row);
+        const rect = cutRect(colCuts, rowCuts, col, row);
         const edit = previousEdits.get(index);
-        const sourceRect = edit?.sourceRect || rect;
         const hasCustomSource = !!edit?.sourceRect;
-        const sampleRect = hasCustomSource ? sourceRect : (diagonalDetection ? rect : expandRect(rect, bleed, state.source.width, state.source.height));
+        const sourceRect = hasCustomSource ? edit.sourceRect : rect;
+        const sampleRect = hasCustomSource ? sourceRect : (walkSheet || diagonalDetection ? rect : expandRect(rect, bleed, state.source.width, state.source.height));
         const copyRect = hasCustomSource ? sourceRect : rect;
         const shape = detectFrameShape(state.source, rect, sampleRect, Number(el.alpha.value));
         const bounds = shape.bounds;
         const anchor = getAnchor(bounds, rect, el.anchorMode.value);
+        if (walkSheet) {
+          const bodyX = bodyCenterX(state.source, rect, 40);
+          if (bodyX != null) anchor.x = bodyX;
+        }
         const frame = {
           index,
           rect,
@@ -995,8 +1103,14 @@
         }
         state.frames.push(frame);
       }
+      state.gridSignature = signature;
       if (!silent) setStatus(`分析完成：${cols}x${rows}，共 ${total} 格。`);
       render();
+    }
+
+    function gridSignature(cols, rows) {
+      if (!state.source) return '';
+      return `${state.source.width}x${state.source.height}:${cols}x${rows}:${el.sheetMode?.value || 'effect'}`;
     }
 
     function gridRect(imageW, imageH, cols, rows, col, row) {
@@ -1004,6 +1118,61 @@
       const x1 = Math.round((col + 1) * imageW / cols);
       const y0 = Math.round(row * imageH / rows);
       const y1 = Math.round((row + 1) * imageH / rows);
+      return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+
+    // --- Auto-snap source grid lines to transparent valleys (walk sheets) ---
+    // Even grid lines can slice through an adjacent character's hair. We build
+    // alpha-density profiles and pull each interior cut line into the nearest gap.
+    function buildAlphaProfiles(threshold) {
+      const img = state.source, W = img.width, H = img.height, d = img.data;
+      const px = new Int32Array(W), py = new Int32Array(H);
+      for (let y = 0; y < H; y++) {
+        const row = y * W;
+        let c = 0;
+        for (let x = 0; x < W; x++) {
+          if (d[(row + x) * 4 + 3] > threshold) { px[x]++; c++; }
+        }
+        py[y] = c;
+      }
+      return { px, py };
+    }
+
+    function evenCuts(n, size) {
+      const cuts = [];
+      for (let i = 0; i <= n; i++) cuts.push(Math.round(i * size / n));
+      return cuts;
+    }
+
+    function snapCuts(profile, n, size) {
+      const cuts = [0];
+      const win = Math.max(4, Math.round((size / n) * 0.35));
+      for (let i = 1; i < n; i++) {
+        const even = Math.round(i * size / n);
+        const lo = Math.max(1, even - win), hi = Math.min(size - 1, even + win);
+        let minVal = Infinity;
+        for (let p = lo; p <= hi; p++) if (profile[p] < minVal) minVal = profile[p];
+        // pick the contiguous lowest-density run whose midpoint is closest to the even line
+        let bestMid = even, bestDist = Infinity, runStart = -1;
+        for (let p = lo; p <= hi + 1; p++) {
+          const atMin = p <= hi && profile[p] === minVal;
+          if (atMin && runStart < 0) runStart = p;
+          if (!atMin && runStart >= 0) {
+            const mid = Math.round((runStart + (p - 1)) / 2);
+            const dist = Math.abs(mid - even);
+            if (dist < bestDist) { bestDist = dist; bestMid = mid; }
+            runStart = -1;
+          }
+        }
+        cuts.push(Math.max(cuts[cuts.length - 1] + 1, bestMid));
+      }
+      cuts.push(size);
+      return cuts;
+    }
+
+    function cutRect(colCuts, rowCuts, col, row) {
+      const x0 = colCuts[col], x1 = colCuts[col + 1];
+      const y0 = rowCuts[row], y1 = rowCuts[row + 1];
       return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
     }
 
@@ -1016,11 +1185,11 @@
     }
 
     function detectFrameShape(image, rect, sampleRect, threshold) {
-      if (el.detectShape?.value === 'diagonal') {
+      if (!isWalkSheetMode() && el.detectShape?.value === 'diagonal') {
         return detectDiagonalShape(image, rect, sampleRect, threshold);
       }
 
-      if (!el.subjectMask || !el.subjectMask.checked) {
+      if (isWalkSheetMode() || !el.subjectMask || !el.subjectMask.checked) {
         return { bounds: detectBounds(image, rect, sampleRect, threshold), mask: null };
       }
 
@@ -1567,6 +1736,22 @@
       return { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 };
     }
 
+    // Hair-robust horizontal body center (walk sheets). The full-silhouette center is
+    // yanked side-to-side by swaying hair, which translates the whole body when used as
+    // an anchor. Erode away thin appendages (hair strands, ribbons, flaring robe edges)
+    // and take the centroid of the dense body that remains. Null if erosion clears it.
+    function bodyCenterX(image, rect, threshold) {
+      const W = image.width, d = image.data, rw = rect.w, rh = rect.h;
+      const R = Math.max(6, Math.round(rw * 0.034));
+      const mask = new Uint8Array(rw * rh);
+      for (let y = 0; y < rh; y++) { const sy = rect.y + y; for (let x = 0; x < rw; x++) mask[y * rw + x] = d[(sy * W + rect.x + x) * 4 + 3] > threshold ? 1 : 0; }
+      const hEr = new Uint8Array(rw * rh);
+      for (let y = 0; y < rh; y++) { const b = y * rw; for (let x = 0; x < rw; x++) { let on = 1; if (x - R < 0 || x + R >= rw) on = 0; else { for (let k = x - R; k <= x + R; k++) if (!mask[b + k]) { on = 0; break; } } hEr[b + x] = on; } }
+      let sumX = 0, cnt = 0;
+      for (let x = 0; x < rw; x++) for (let y = 0; y < rh; y++) { let on = 1; if (y - R < 0 || y + R >= rh) on = 0; else { for (let k = y - R; k <= y + R; k++) if (!hEr[k * rw + x]) { on = 0; break; } } if (on) { sumX += x; cnt++; } }
+      return cnt ? sumX / cnt : null;
+    }
+
     function repackSpritesheet(source, cols, rows, scaleRatio) {
       if (!source || scaleRatio >= 1) return source;
       const canvas = document.createElement('canvas');
@@ -1619,19 +1804,21 @@
 
       const refIndex = Math.max(0, Math.min(state.frames.length - 1, Number(el.reference.value) - 1));
       const pad = Number(el.padding.value);
-      const bleed = Number(el.bleed.value);
+      const walkSheet = isWalkSheetMode();
+      const bleed = walkSheet ? 0 : Number(el.bleed.value);
       const frameW = Math.max(...state.frames.map(frame => frame.rect.w));
       const frameH = Math.max(...state.frames.map(frame => frame.rect.h));
       const refCol = refIndex % cols;
+      const rowAlign = el.rowAlign.checked;
       const sharedImpact = el.sharedImpact.checked;
+      for (const frame of state.frames) applyManualFrameEdit(frame);
       const targetAnchor = {
         x: frameW / 2,
-        y: frameH / 2,
+        y: walkSheet ? Math.max(...state.frames.map(frame => frame.anchor.y)) : frameH / 2,
       };
-      for (const frame of state.frames) applyManualFrameEdit(frame);
-      const shifts = state.frames.map(frame => {
+      let shifts = state.frames.map(frame => {
         const row = Math.floor(frame.index / cols);
-        const rowRefIndex = el.rowAlign.checked ? Math.min(row * cols + refCol, state.frames.length - 1) : refIndex;
+        const rowRefIndex = rowAlign ? Math.min(row * cols + refCol, state.frames.length - 1) : refIndex;
         const ref = state.frames[rowRefIndex];
         if (sharedImpact) {
           return {
@@ -1650,7 +1837,10 @@
       let offsetX = 0;
       let offsetY = 0;
       const hasCustomSources = state.frames.some(frame => hasCustomSource(frame));
-      const useExpandedOutput = el.expandOutput.checked || bleed > 0 || hasCustomSources;
+      const useExpandedOutput = el.expandOutput.checked || (!walkSheet && (bleed > 0 || hasCustomSources));
+      if (walkSheet && !useExpandedOutput) {
+        shifts = shifts.map((shift, index) => constrainShiftToVisibleBounds(state.frames[index], shift, outFrameW, outFrameH));
+      }
       if (useExpandedOutput) {
         const lefts = [];
         const rights = [];
@@ -1682,11 +1872,16 @@
         const col = frame.index % cols;
         const row = Math.floor(frame.index / cols);
         const copyRect = getFrameCopyRect(frame, useExpandedOutput);
-        const baseX = col * outFrameW + Math.floor((frameW - frame.rect.w) / 2);
-        const baseY = row * outFrameH + Math.floor((frameH - frame.rect.h) / 2);
+        // Place purely by anchor: the per-cell "(frameW - rect.w)/2" centering term
+        // offsets each frame by a cell-size-dependent amount that the anchor shift does
+        // not cancel, which jitters playback once cells are uneven (snapped). It is 0 for
+        // even grids, so dropping it is a no-op there and fixes uneven-cell alignment.
+        const baseX = col * outFrameW;
+        const baseY = row * outFrameH;
         const dstBaseX = baseX + offsetX + shift.dx + (copyRect.x - frame.rect.x);
         const dstBaseY = baseY + offsetY + shift.dy + (copyRect.y - frame.rect.y);
-        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY);
+        const clipRect = walkSheet && !useExpandedOutput ? { x: baseX, y: baseY, w: outFrameW, h: outFrameH } : null;
+        blitFrame(state.source, aligned, copyRect, dstBaseX, dstBaseY, null, copyRect, clipRect);
       }
 
       state.aligned = aligned;
@@ -1698,14 +1893,14 @@
         state.selectedFrameIndex = originalSelectedFrameIndex;
       }
       const alignLabel = sharedImpact
-        ? '共享命中點'
-        : (el.rowAlign.checked ? '逐列對齊' : `基準格：${refIndex + 1}`);
+        ? (walkSheet ? '共享角色原點' : '共享命中點')
+        : (rowAlign ? '逐列對齊' : `基準格：${refIndex + 1}`);
       const repackLabel = usingRepack ? `，縮放留白 ${repackPercent}%` : '';
       setStatus(`已對齊 ${aligned ? cols * rows : state.frames.length} 格。${alignLabel}${repackLabel}，輸出格：${outFrameW}x${outFrameH}`);
       render();
     }
 
-    function blitFrame(source, target, rect, dstX, dstY, mask = null, maskRect = rect) {
+    function blitFrame(source, target, rect, dstX, dstY, mask = null, maskRect = rect, clipRect = null) {
       for (let y = 0; y < rect.h; y++) {
         for (let x = 0; x < rect.w; x++) {
           if (mask) {
@@ -1717,6 +1912,7 @@
           const tx = dstX + x;
           const ty = dstY + y;
           if (tx < 0 || ty < 0 || tx >= target.width || ty >= target.height) continue;
+          if (clipRect && (tx < clipRect.x || ty < clipRect.y || tx >= clipRect.x + clipRect.w || ty >= clipRect.y + clipRect.h)) continue;
           const src = ((rect.y + y) * source.width + rect.x + x) * 4;
           const dst = (ty * target.width + tx) * 4;
           target.data[dst] = source.data[src];
@@ -1737,7 +1933,23 @@
     }
 
     function getFrameCopyRect(frame, useExpandedOutput) {
+      if (hasCustomSource(frame)) return frame.copyRect || frame.sourceRect || frame.rect;
       return useExpandedOutput ? (frame.copyRect || frame.rect) : frame.rect;
+    }
+
+    function constrainShiftToVisibleBounds(frame, shift, outFrameW, outFrameH) {
+      const bounds = frame.bounds || frame.autoBounds;
+      if (!bounds || bounds.empty) return shift;
+      const safe = 2;
+      return {
+        dx: clampShift(shift.dx, safe - bounds.minX, outFrameW - safe - (bounds.maxX + 1)),
+        dy: clampShift(shift.dy, safe - bounds.minY, outFrameH - safe - (bounds.maxY + 1)),
+      };
+    }
+
+    function clampShift(value, minValue, maxValue) {
+      if (minValue > maxValue) return Math.round((minValue + maxValue) / 2);
+      return Math.max(minValue, Math.min(maxValue, value));
     }
 
     function getOutputMask(frame) {
@@ -1766,7 +1978,7 @@
       const fps = Number(el.fps.value);
       if (!state.playTimer || time - state.playTimer > 1000 / fps) {
         state.playTimer = time;
-        const total = Math.max(1, state.frames.length);
+        const total = getPlaybackFrameCount();
         state.playIndex = (state.playIndex + 1) % total;
         drawPlayer();
       }
@@ -2295,8 +2507,8 @@ public class AiSpriteSheetAnimator : MonoBehaviour
       }
       const cols = Number(el.cols.value);
       const rows = Number(el.rows.value);
-      const total = cols * rows;
-      const index = state.playIndex % total;
+      const playback = getPlaybackFrame(cols, rows);
+      const index = playback.index;
       const col = index % cols;
       const row = Math.floor(index / cols);
       const src = gridRect(sheet.width, sheet.height, cols, rows, col, row);
@@ -2309,7 +2521,33 @@ public class AiSpriteSheetAnimator : MonoBehaviour
       ctx.imageSmoothingEnabled = scale < 1;
       if (ctx.imageSmoothingEnabled) ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(temp, src.x, src.y, src.w, src.h, dx, dy, dw, dh);
-      el.frameInfo.textContent = `第 ${index + 1} / ${total} 格`;
+      el.frameInfo.textContent = playback.label;
+    }
+
+    function getPlaybackFrameCount() {
+      if (!state.frames.length) return 1;
+      const cols = Math.max(1, Number(el.cols.value) || 1);
+      const rows = Math.max(1, Number(el.rows.value) || 1);
+      return el.playScope?.value === 'row' ? cols : cols * rows;
+    }
+
+    function getPlaybackFrame(cols, rows) {
+      const total = cols * rows;
+      if (el.playScope?.value === 'row') {
+        const selected = state.frames[state.selectedFrameIndex];
+        const selectedRow = selected ? Math.floor(selected.index / cols) : 0;
+        const row = Math.max(0, Math.min(rows - 1, selectedRow));
+        const col = state.playIndex % cols;
+        return {
+          index: row * cols + col,
+          label: `第 ${row + 1} 列 / 第 ${col + 1} / ${cols} 格`,
+        };
+      }
+      const index = state.playIndex % total;
+      return {
+        index,
+        label: `第 ${index + 1} / ${total} 格`,
+      };
     }
 
     function drawFrameGuides(ctx, frames, baseX, baseY, scale) {
