@@ -79,6 +79,25 @@
       color: #fff2d8;
     }
 
+    .support-btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 16px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: var(--accent);
+      color: #1a1208;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .support-btn:hover {
+      background: #f0c04f;
+      border-color: #f0c04f;
+      color: #1a1208;
+    }
+
     input[type="number"] {
       width: 64px;
       padding: 0 6px;
@@ -306,6 +325,7 @@
       <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">Guide</a>
       <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
       <a class="tool-link" href="./index.html">中文</a>
+      <a class="support-btn" href="https://ko-fi.com/kuanming" target="_blank" rel="noopener">☕ Support</a>
       <label title="Number of columns across the spritesheet.">Cols <input id="cols" type="number" min="1" max="32" value="4"></label>
       <label title="Number of rows down the spritesheet.">Rows <input id="rows" type="number" min="1" max="32" value="2"></label>
       <label title="When the shared impact point is off, other cells align to this one.">Ref cell <input id="reference" type="number" min="1" max="256" value="1"></label>

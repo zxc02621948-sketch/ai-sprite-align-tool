@@ -544,6 +544,14 @@ run.bat
 
 ---
 
+## ☕ 支持作者 / Support
+
+這個工具是免費且開源的。如果它對你有幫助，歡迎請我喝杯咖啡，支持我持續維護與開發更多免費工具。
+
+This tool is free and open source. If it helps you, consider buying me a coffee to support ongoing development of more free tools.
+
+👉 https://ko-fi.com/kuanming
+
 ## 授權
 
 本專案程式碼採用 MIT License 授權，詳見 [LICENSE](LICENSE)。
