@@ -47,9 +47,24 @@
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px 18px;
       align-items: center;
       padding: 10px;
+      padding-right: 150px;
+    }
+
+    .tool-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .tool-group--settings {
+      border-left: 1px solid rgba(215,168,62,.32);
+      padding-left: 18px;
+    }
+    .tool-group--links {
+      margin-left: auto;
     }
 
     button,
@@ -80,10 +95,14 @@
     }
 
     .support-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
       display: inline-flex;
       align-items: center;
-      min-height: 34px;
-      padding: 0 16px;
+      min-height: 36px;
+      padding: 0 18px;
       border: 1px solid var(--accent);
       border-radius: 999px;
       background: var(--accent);
@@ -91,11 +110,12 @@
       font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45);
+      transition: filter 0.15s ease, transform 0.1s ease;
     }
     .support-btn:hover {
-      background: #f0c04f;
-      border-color: #f0c04f;
-      color: #1a1208;
+      filter: brightness(1.08);
+      transform: translateY(-1px);
     }
 
     input[type="number"] {
@@ -312,54 +332,62 @@
   </style>
 </head>
 <body>
+  <a class="support-btn" href="https://ko-fi.com/kuanming" target="_blank" rel="noopener">☕ 支持作者</a>
   <div class="app" id="app">
     <div class="toolbar">
-      <label class="file-btn">
-        <button type="button" title="載入要整理的 spritesheet。">開啟圖檔</button>
-        <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
-      </label>
-      <button id="align-btn" type="button" title="依目前來源框與錨點設定產生新的 spritesheet。">自動對齊</button>
-      <button id="play-btn" type="button" title="播放目前對齊結果；尚未對齊時播放原圖。">播放</button>
-      <label>播放範圍
-        <select id="play-scope" title="行走圖通常每一列是一個方向，建議只播放目前列。特效跨列接續時可播放全部。">
-          <option value="all" selected>全部格</option>
-          <option value="row">目前列</option>
-        </select>
-      </label>
-      <button id="export-btn" type="button" title="匯出右側目前的 spritesheet。">匯出 PNG</button>
-      <button id="send-bg-remover-btn" type="button" title="把目前 spritesheet 送到素材去背助手。">送到素材去背</button>
-      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">使用說明</a>
-      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">更新日誌</a>
-      <a class="tool-link" href="./index.en.html">EN</a>
-      <a class="support-btn" href="https://ko-fi.com/kuanming" target="_blank" rel="noopener">☕ 支持作者</a>
-      <label>素材
-        <select id="sheet-mode" title="人物行走圖會固定使用原始格子，不向外取樣，也不把所有方向拉到同一命中點。">
-          <option value="effect" selected>特效 / 一般</option>
-          <option value="walk">人物行走圖</option>
-        </select>
-      </label>
-      <button id="preset-walk-3x4" type="button" title="套用 3 欄 x 4 列人物行走圖設定。">3x4 行走</button>
-      <button id="preset-walk-4x4" type="button" title="套用 4 欄 x 4 列人物行走圖設定。">4x4 行走</button>
-      <label title="spritesheet 水平方向的格數。">欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
-      <label title="spritesheet 垂直方向的格數。">列 <input id="rows" type="number" min="1" max="32" value="2"></label>
-      <label title="未啟用共享原點時，其他格會對齊到這一格。">基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
-      <span class="help" title="未啟用共享原點時，其他格會對齊到這一格；啟用逐列對齊時，每一列會用同欄基準格。">?</span>
-      <label>對齊
-        <select id="anchor-mode" title="決定每格用哪個點來對齊。特效通常先用底部中心；斬擊或光球可試中心或視覺重心。">
-          <option value="center" title="用偵測範圍的中心對齊，適合中心穩定的特效。">主體中心</option>
-          <option value="bottom" selected title="用偵測範圍的底部中心對齊，適合落地爆炸、地面特效。">底部中心</option>
-          <option value="centroid" title="用不透明像素的重心對齊，適合形狀不規則但亮度分布穩定的特效。">視覺重心</option>
-        </select>
-      </label>
-      <span class="help" title="錨點會影響播放是否跳動。底部中心適合地面特效，主體中心適合一般斬擊，視覺重心適合不規則光效。">?</span>
-      <label>底色
-        <select id="bg-mode" title="只影響預覽背景，不會改變輸出的透明度。">
-          <option value="checker" title="用棋盤格檢查透明背景。">棋盤格</option>
-          <option value="game" title="用接近遊戲內的暗底預覽亮色特效。">遊戲暗底</option>
-          <option value="black" title="用黑色背景檢查亮色邊緣。">黑底</option>
-          <option value="white" title="用白色背景檢查暗色雜邊。">白底</option>
-        </select>
-      </label>
+      <div class="tool-group">
+        <label class="file-btn">
+          <button type="button" title="載入要整理的 spritesheet。">開啟圖檔</button>
+          <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
+        </label>
+        <button id="align-btn" type="button" title="依目前來源框與錨點設定產生新的 spritesheet。">自動對齊</button>
+        <button id="play-btn" type="button" title="播放目前對齊結果；尚未對齊時播放原圖。">播放</button>
+        <label>播放範圍
+          <select id="play-scope" title="行走圖通常每一列是一個方向，建議只播放目前列。特效跨列接續時可播放全部。">
+            <option value="all" selected>全部格</option>
+            <option value="row">目前列</option>
+          </select>
+        </label>
+        <button id="export-btn" type="button" title="匯出右側目前的 spritesheet。">匯出 PNG</button>
+        <button id="send-bg-remover-btn" type="button" title="把目前 spritesheet 送到素材去背助手。">送到素材去背</button>
+      </div>
+
+      <div class="tool-group tool-group--settings">
+        <label>素材
+          <select id="sheet-mode" title="人物行走圖會固定使用原始格子，不向外取樣，也不把所有方向拉到同一命中點。">
+            <option value="effect" selected>特效 / 一般</option>
+            <option value="walk">人物行走圖</option>
+          </select>
+        </label>
+        <button id="preset-walk-3x4" type="button" title="套用 3 欄 x 4 列人物行走圖設定。">3x4 行走</button>
+        <button id="preset-walk-4x4" type="button" title="套用 4 欄 x 4 列人物行走圖設定。">4x4 行走</button>
+        <label title="spritesheet 水平方向的格數。">欄 <input id="cols" type="number" min="1" max="32" value="4"></label>
+        <label title="spritesheet 垂直方向的格數。">列 <input id="rows" type="number" min="1" max="32" value="2"></label>
+        <label title="未啟用共享原點時，其他格會對齊到這一格。">基準格 <input id="reference" type="number" min="1" max="256" value="1"></label>
+        <span class="help" title="未啟用共享原點時，其他格會對齊到這一格；啟用逐列對齊時，每一列會用同欄基準格。">?</span>
+        <label>對齊
+          <select id="anchor-mode" title="決定每格用哪個點來對齊。特效通常先用底部中心；斬擊或光球可試中心或視覺重心。">
+            <option value="center" title="用偵測範圍的中心對齊，適合中心穩定的特效。">主體中心</option>
+            <option value="bottom" selected title="用偵測範圍的底部中心對齊，適合落地爆炸、地面特效。">底部中心</option>
+            <option value="centroid" title="用不透明像素的重心對齊，適合形狀不規則但亮度分布穩定的特效。">視覺重心</option>
+          </select>
+        </label>
+        <span class="help" title="錨點會影響播放是否跳動。底部中心適合地面特效，主體中心適合一般斬擊，視覺重心適合不規則光效。">?</span>
+        <label>底色
+          <select id="bg-mode" title="只影響預覽背景，不會改變輸出的透明度。">
+            <option value="checker" title="用棋盤格檢查透明背景。">棋盤格</option>
+            <option value="game" title="用接近遊戲內的暗底預覽亮色特效。">遊戲暗底</option>
+            <option value="black" title="用黑色背景檢查亮色邊緣。">黑底</option>
+            <option value="white" title="用白色背景檢查暗色雜邊。">白底</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="tool-group tool-group--links">
+        <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">使用說明</a>
+        <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">更新日誌</a>
+        <a class="tool-link" href="./index.en.html">EN</a>
+      </div>
     </div>
 
     <main class="main">

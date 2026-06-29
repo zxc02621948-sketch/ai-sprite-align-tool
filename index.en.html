@@ -47,9 +47,24 @@
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px 18px;
       align-items: center;
       padding: 10px;
+      padding-right: 130px;
+    }
+
+    .tool-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .tool-group--settings {
+      border-left: 1px solid rgba(215,168,62,.32);
+      padding-left: 18px;
+    }
+    .tool-group--links {
+      margin-left: auto;
     }
 
     button,
@@ -80,10 +95,14 @@
     }
 
     .support-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
       display: inline-flex;
       align-items: center;
-      min-height: 34px;
-      padding: 0 16px;
+      min-height: 36px;
+      padding: 0 18px;
       border: 1px solid var(--accent);
       border-radius: 999px;
       background: var(--accent);
@@ -91,11 +110,12 @@
       font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45);
+      transition: filter 0.15s ease, transform 0.1s ease;
     }
     .support-btn:hover {
-      background: #f0c04f;
-      border-color: #f0c04f;
-      color: #1a1208;
+      filter: brightness(1.08);
+      transform: translateY(-1px);
     }
 
     input[type="number"] {
@@ -312,40 +332,48 @@
   </style>
 </head>
 <body>
+  <a class="support-btn" href="https://ko-fi.com/kuanming" target="_blank" rel="noopener">☕ Support</a>
   <div class="app" id="app">
     <div class="toolbar">
-      <label class="file-btn">
-        <button type="button" title="Load the spritesheet you want to clean up.">Open Image</button>
-        <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
-      </label>
-      <button id="align-btn" type="button" title="Generate a new spritesheet from the current source frames and anchor settings.">Auto-Align</button>
-      <button id="play-btn" type="button" title="Play the current aligned result; plays the original before aligning.">Play</button>
-      <button id="export-btn" type="button" title="Export the current spritesheet shown on the right.">Export PNG</button>
-      <button id="send-bg-remover-btn" type="button" title="Send the current spritesheet to the BG Remover.">Send to BG Remover</button>
-      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">Guide</a>
-      <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
-      <a class="tool-link" href="./index.html">中文</a>
-      <a class="support-btn" href="https://ko-fi.com/kuanming" target="_blank" rel="noopener">☕ Support</a>
-      <label title="Number of columns across the spritesheet.">Cols <input id="cols" type="number" min="1" max="32" value="4"></label>
-      <label title="Number of rows down the spritesheet.">Rows <input id="rows" type="number" min="1" max="32" value="2"></label>
-      <label title="When the shared impact point is off, other cells align to this one.">Ref cell <input id="reference" type="number" min="1" max="256" value="1"></label>
-      <span class="help" title="When the shared impact point is off, other cells align to this one; with per-row align on, each row uses the reference cell in its own column.">?</span>
-      <label>Align
-        <select id="anchor-mode" title="Which point each cell aligns by. For effects, start with bottom-center; for slashes or orbs, try center or visual centroid.">
-          <option value="center" title="Aligns by the center of the detected region — good for effects with a stable center.">Subject center</option>
-          <option value="bottom" selected title="Aligns by the bottom-center of the detected region — good for ground impacts and floor effects.">Bottom center</option>
-          <option value="centroid" title="Aligns by the centroid of opaque pixels — good for irregular shapes with stable brightness.">Visual centroid</option>
-        </select>
-      </label>
-      <span class="help" title="The anchor affects whether playback jitters. Bottom-center suits ground effects, subject-center suits typical slashes, visual centroid suits irregular light effects.">?</span>
-      <label>Backdrop
-        <select id="bg-mode" title="Affects the preview background only; does not change output transparency.">
-          <option value="checker" title="Checkerboard, for inspecting transparent backgrounds.">Checkerboard</option>
-          <option value="game" title="A dark, in-game-like backdrop for previewing bright effects.">Game dark</option>
-          <option value="black" title="Black background, for inspecting bright edges.">Black</option>
-          <option value="white" title="White background, for inspecting dark fringing.">White</option>
-        </select>
-      </label>
+      <div class="tool-group">
+        <label class="file-btn">
+          <button type="button" title="Load the spritesheet you want to clean up.">Open Image</button>
+          <input id="file-input" type="file" accept="image/png,image/webp,image/jpeg">
+        </label>
+        <button id="align-btn" type="button" title="Generate a new spritesheet from the current source frames and anchor settings.">Auto-Align</button>
+        <button id="play-btn" type="button" title="Play the current aligned result; plays the original before aligning.">Play</button>
+        <button id="export-btn" type="button" title="Export the current spritesheet shown on the right.">Export PNG</button>
+        <button id="send-bg-remover-btn" type="button" title="Send the current spritesheet to the BG Remover.">Send to BG Remover</button>
+      </div>
+
+      <div class="tool-group tool-group--settings">
+        <label title="Number of columns across the spritesheet.">Cols <input id="cols" type="number" min="1" max="32" value="4"></label>
+        <label title="Number of rows down the spritesheet.">Rows <input id="rows" type="number" min="1" max="32" value="2"></label>
+        <label title="When the shared impact point is off, other cells align to this one.">Ref cell <input id="reference" type="number" min="1" max="256" value="1"></label>
+        <span class="help" title="When the shared impact point is off, other cells align to this one; with per-row align on, each row uses the reference cell in its own column.">?</span>
+        <label>Align
+          <select id="anchor-mode" title="Which point each cell aligns by. For effects, start with bottom-center; for slashes or orbs, try center or visual centroid.">
+            <option value="center" title="Aligns by the center of the detected region — good for effects with a stable center.">Subject center</option>
+            <option value="bottom" selected title="Aligns by the bottom-center of the detected region — good for ground impacts and floor effects.">Bottom center</option>
+            <option value="centroid" title="Aligns by the centroid of opaque pixels — good for irregular shapes with stable brightness.">Visual centroid</option>
+          </select>
+        </label>
+        <span class="help" title="The anchor affects whether playback jitters. Bottom-center suits ground effects, subject-center suits typical slashes, visual centroid suits irregular light effects.">?</span>
+        <label>Backdrop
+          <select id="bg-mode" title="Affects the preview background only; does not change output transparency.">
+            <option value="checker" title="Checkerboard, for inspecting transparent backgrounds.">Checkerboard</option>
+            <option value="game" title="A dark, in-game-like backdrop for previewing bright effects.">Game dark</option>
+            <option value="black" title="Black background, for inspecting bright edges.">Black</option>
+            <option value="white" title="White background, for inspecting dark fringing.">White</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="tool-group tool-group--links">
+        <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool#readme" target="_blank" rel="noopener noreferrer">Guide</a>
+        <a class="tool-link" href="https://github.com/zxc02621948-sketch/ai-sprite-align-tool/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <a class="tool-link" href="./index.html">中文</a>
+      </div>
     </div>
 
     <main class="main">
